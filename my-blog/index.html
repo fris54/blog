@@ -229,7 +229,8 @@
                     <article class="post-card" onclick="showDetail(${p.id})">
                         <h2>${p.title}</h2>
                         <p>${p.content.substring(0, 100).replace(/[#*`]/g, '')}...</p>
-                        <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${new Date(p.created_at).toLocaleDateString()}</div>
+                        // 把 p.created_at 改为 p.date
+                    <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${p.date || ''}</div>
                     </article>
                 `).join('');
             } catch (e) {
