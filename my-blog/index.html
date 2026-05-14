@@ -42,6 +42,17 @@
         .detail-card { padding: 45px; margin-top: 20px; }
         .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); }
 
+        /* 超链接样式修改 */
+        .markdown-body a {
+            color: inherit !important;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            transition: border-color 0.3s;
+        }
+        .markdown-body a:hover {
+            border-bottom-color: rgba(255, 255, 255, 0.8);
+        }
+
         /* 核心：代码框外观强制修正 */
         .markdown-body pre { 
             background: #0d1117 !important; 
@@ -72,7 +83,9 @@
 <body>
     <div id="bg-fixed"></div>
     <div class="overlay"></div>
-    <div id="location-tag"></div> <div id="list-ui">
+    <div id="location-tag"></div> 
+
+    <div id="list-ui">
         <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
             <div id="typewriter"></div>
@@ -90,7 +103,6 @@
     <script>
         const locationData = { pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" }, mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" } };
 
-        // 场景初始化：背景图 + 位置标签
         function initScene() {
             const bg = document.getElementById('bg-fixed');
             const tag = document.getElementById('location-tag');
@@ -144,12 +156,11 @@
                 const contentEl = document.getElementById('detail-content');
                 contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
 
-                // 核心：处理代码块样式和复制按钮
                 setTimeout(() => {
                     document.querySelectorAll('#post-body pre').forEach(pre => {
                         const code = pre.querySelector('code');
                         if (code) {
-                            hljs.highlightElement(code); // 高亮
+                            hljs.highlightElement(code); 
                             if (!pre.querySelector('.copy-btn')) {
                                 const btn = document.createElement('button');
                                 btn.className = 'copy-btn';
@@ -175,7 +186,7 @@
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
             if (pushState) history.pushState({}, '', window.location.pathname);
-            fetchPosts(); // 确保返回时列表正常加载
+            fetchPosts(); 
             runTypewriter();
         }
 
