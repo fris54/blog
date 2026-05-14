@@ -45,7 +45,6 @@
             white-space: pre !important; /* 代码块内不换行 */
         }
         .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; white-space: pre !important; }
-        /* ----------------------- */
 
         .markdown-body a { color: inherit !important; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.3); transition: border-color 0.3s; }
         .markdown-body a:hover { border-bottom-color: rgba(255, 255, 255, 0.8); }
@@ -122,8 +121,8 @@
 
         // 配置 Marked 解析器
         marked.setOptions({
-            breaks: true, // 关键：允许单行换行
-            gfm: true     // 启用 GitHub 风格
+            breaks: true, // 允许单行换行
+            gfm: true
         });
 
         async function loadArticle(id, pushState = true) {
@@ -135,10 +134,8 @@
                 document.getElementById('detail-view').style.display = 'block';
                 
                 const contentEl = document.getElementById('detail-content');
-                // 解析 Markdown
                 contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
 
-                // 处理代码块
                 setTimeout(() => {
                     document.querySelectorAll('#post-body pre').forEach(pre => {
                         const code = pre.querySelector('code');
