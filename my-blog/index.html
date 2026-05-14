@@ -13,36 +13,48 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
-        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: -1; }
         
-        /* 列表容器 */
+        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
+        
+        /* Squircle 圆角统一样式 (使用 35px 左右的平滑圆角模拟) */
+        .squircle { border-radius: 35px; }
+
         .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
         
-        /* 列表卡片毛玻璃 */
-        .post-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 15px; padding: 30px; margin-bottom: 30px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
-        .post-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); }
-        
-        /* 详情页专用毛玻璃卡片 */
-        .detail-card { 
-            background: rgba(0, 0, 0, 0.4); /* 深色半透明背景 */
+        /* 统一毛玻璃样式：浅色、高亮、高模糊 */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 40px;
-            margin-top: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         }
 
+        /* 列表卡片 */
+        .post-card { 
+            display: block; 
+            text-decoration: none; 
+            color: inherit; 
+            padding: 30px; 
+            margin-bottom: 25px; 
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), background 0.3s; 
+        }
+        .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
+        .post-card h2 { font-weight: 400; margin-bottom: 10px; font-size: 1.5rem; }
+
+        /* 详情页界面 */
         #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
-        .markdown-body { line-height: 1.8; color: rgba(255,255,255,0.95); font-size: 1.05rem; }
-        .markdown-body h1 { margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .markdown-body pre { background: #0d1117; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 20px 0; }
+        .detail-card { padding: 45px; margin-top: 20px; }
         
-        #location-tag { position: fixed; right: 25px; bottom: 25px; font-size: 0.85rem; opacity: 0; transition: opacity 1s; color: rgba(255,255,255,0.7); z-index: 10; }
-        .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-block; transition: 0.3s; font-size: 0.9rem; }
+        .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); font-size: 1.05rem; }
+        .markdown-body h1 { margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; font-weight: 400; }
+        .markdown-body pre { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 20px; overflow-x: auto; margin: 20px 0; }
+
+        .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; transition: 0.3s; font-size: 0.95rem; text-decoration: none; color: white; }
         .back-btn:hover { opacity: 1; transform: translateX(-5px); }
+
+        #location-tag { position: fixed; right: 30px; bottom: 30px; font-size: 0.8rem; opacity: 0; transition: opacity 1s; color: rgba(255,255,255,0.6); z-index: 10; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -51,25 +63,23 @@
     <div id="location-tag"></div>
 
     <div id="list-ui">
-        <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem); letter-spacing: 2px;">Fris's Page</h1>
-            <div style="margin-top:15px; opacity:0.6;">Currently nothing's here</div>
+        <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); letter-spacing: 3px; cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
+            <div style="margin-top:15px; opacity:0.5; font-weight:300;">Currently nothing's here</div>
         </section>
         <main class="blog-section" id="post-list"></main>
     </div>
 
     <div id="detail-view" class="blog-section">
-        <div class="back-btn" onclick="showList()">← Back to List</div>
-        <div class="detail-card">
+        <a href="/" class="back-btn" onclick="event.preventDefault(); showList();">← Back</a>
+        <div class="detail-card glass-panel squircle">
             <div id="detail-content" class="markdown-body"></div>
         </div>
     </div>
 
     <script>
-        const locationData = {
-            pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" },
-            mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" }
-        };
+        // ... (locationData 保持不变) ...
+        const locationData = { pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" }, mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" } };
 
         function initScene() {
             const bg = document.getElementById('bg-fixed');
@@ -84,10 +94,7 @@
             img.onload = () => {
                 bg.style.backgroundImage = `url('${src}')`;
                 bg.style.opacity = '1';
-                if (locationData[type][num]) {
-                    tag.innerText = locationData[type][num];
-                    tag.style.opacity = '1';
-                }
+                if (locationData[type][num]) { tag.innerText = locationData[type][num]; tag.style.opacity = '1'; }
             };
         }
 
@@ -97,39 +104,41 @@
                 const posts = await res.json();
                 document.getElementById('post-list').innerHTML = posts.map(p => {
                     const previewText = p.content.substring(0, 100).replace(/[#*`>~-]/g, '');
+                    // 关键改动：使用 <a> 标签，href 指向具体 ID
                     return `
-                        <article class="post-card" onclick="loadArticle(${p.id})">
+                        <a href="?id=${p.id}" class="post-card glass-panel squircle" onclick="handleCardClick(event, ${p.id})">
                             <h2>${p.title}</h2>
-                            <p style="opacity:0.6; margin-top:10px;">${previewText}...</p>
+                            <p style="opacity:0.6; font-size:0.95rem;">${previewText}...</p>
                             <div style="margin-top:20px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
-                        </article>
+                        </a>
                     `;
                 }).join('');
             } catch (e) { console.error(e); }
         }
 
-        // 处理文章详情并模拟链接
+        // 处理点击：普通左键走 SPA 逻辑，中键默认新标签页打开
+        function handleCardClick(e, id) {
+            if (e.button === 0 && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                loadArticle(id);
+            }
+        }
+
         async function loadArticle(id, pushState = true) {
             try {
                 const res = await fetch(`/posts?id=${id}`);
-                if (!res.ok) throw new Error();
                 const post = await res.json();
-                
                 document.getElementById('list-ui').style.display = 'none';
                 document.getElementById('detail-view').style.display = 'block';
-                
                 document.getElementById('detail-content').innerHTML = `
                     <h1>${post.title}</h1>
-                    <div style="opacity:0.4; font-size:0.9rem; margin-bottom:30px;">${post.date || ''}</div>
+                    <div style="opacity:0.4; font-size:0.85rem; margin-bottom:30px;">Published on ${post.date || 'Unknown Date'}</div>
                     <div>${marked.parse(post.content)}</div>
                 `;
-                
                 document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 window.scrollTo(0,0);
-
-                // 更新地址栏，加上 ?id=xxx
                 if(pushState) history.pushState({id: id}, '', `?id=${id}`);
-            } catch (e) { alert("加载失败"); }
+            } catch (e) { alert("Load Failed"); }
         }
 
         function showList(pushState = true) {
@@ -138,23 +147,15 @@
             if(pushState) history.pushState({}, '', window.location.pathname);
         }
 
-        // 监听浏览器“返回”按钮
-        window.onpopstate = function(event) {
-            if (event.state && event.state.id) {
-                loadArticle(event.state.id, false);
-            } else {
-                showList(false);
-            }
+        window.onpopstate = (e) => {
+            const id = new URLSearchParams(window.location.search).get('id');
+            id ? loadArticle(id, false) : showList(false);
         };
 
         window.onload = () => {
             initScene();
-            // 检查初始 URL 是否带有 id 参数
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (id) {
-                loadArticle(id, false);
-            }
+            const id = new URLSearchParams(window.location.search).get('id');
+            if (id) loadArticle(id, false);
             fetchPosts();
         };
     </script>
