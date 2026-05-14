@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fris's Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
+    <style>
+        /* 核心布局：背景不动，内容滚动 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #111; 
+            font-family: 'Noto Sans SC', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            overflow-y: auto; /* 允许纵向滚动 */
+        }
+
+        #bg-fixed {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            background-position: center;
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+
+        /* 首页全屏区域 */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.2rem, 10vw, 4.5rem);
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: fadeIn 2.5s ease-out;
+        }
+
+        #typewriter {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            min-height: 1.5em;
+        }
+
+        /* 博客列表区域 */
+        .blog-section {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 50px 20px 100px 20px;
+            position: relative;
+        }
+
+        .post-card {
+            background: rgba(255, 255, 255, 0.05); /* 极低透明度 */
+            backdrop-filter: blur(15px);          /* 毛玻璃核心 */
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;                  /* 四角圆角 */
+            padding: 40px;
+            margin-bottom: 40px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .post-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .post-card h2 { font-size: 1.8rem; margin-bottom: 15px; font-weight: 400; }
+        .post-card p { font-size: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.8; }
+        .post-meta { margin-top: 20px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.4); }
+
+        /* 固定不动的标签 */
+        #location-tag {
+            position: fixed;
+            right: 30px; bottom: 30px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 2s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="bg-fixed"></div>
+    <div class="overlay"></div>
+    <div id="location-tag"></div>
+
+    <div class="container">
+        <section class="hero">
+            <h1 onclick="location.reload()">Fris's Page</h1>
+            <div id="typewriter"><span id="text"></span></div>
+        </section>
+
+        <main class="blog-section" id="post-list">
+            <div style="text-align: center; opacity: 0.5;">Loading posts...</div>
+        </main>
+    </div>
+
+    <script>
+        const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
+        const locationData = { pc: { "1": "京都　龍安寺", "9": "東京駅" }, mobile: { "1": "河口湖" } };
+
+        // 背景逻辑保持不变
+        function initBg() {
+            const bg = document.getElementById('bg-fixed');
+            const tag = document.getElementById('location-tag');
+            const isMobile = window.innerWidth <= 768;
+            const type = isMobile ? 'mobile' : 'pc';
+            const count = isMobile ? CONFIG.mobileCount : CONFIG.pcCount;
+            const num = Math.floor(Math.random() * count) + 1;
+            const src = `${CONFIG.basePath}${type}/${num}${CONFIG.extension}`;
+            
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                bg.style.backgroundImage = `url('${src}')`;
+                bg.style.opacity = '1';
+                if (locationData[type][num]) {
+                    tag.innerText = locationData[type][num];
+                    tag.style.opacity = '1';
+                }
+            };
+        }
+
+        // 打字机逻辑
+        let charIndex = 0;
+        const typeText = "Currently nothing's here";
+        function typeWriter() {
+            if (charIndex < typeText.length) {
+                document.getElementById('text').innerHTML += typeText.charAt(charIndex);
+                charIndex++;
+                setTimeout(typeWriter, 100);
+            }
+        }
+
+        // 获取后端 D1 数据
+        async function fetchPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                const listHtml = posts.map(post => `
+                    <article class="post-card">
+                        <h2>${post.title}</h2>
+                        <p>${post.excerpt || post.content.substring(0, 100) + '...'}</p>
+                        <div class="post-meta">${post.date}</div>
+                    </article>
+                `).join('');
+                document.getElementById('post-list').innerHTML = listHtml;
+            } catch (err) {
+                document.getElementById('post-list').innerHTML = `<p>暂时无法加载文章</p>`;
+            }
+        }
+
+        window.onload = () => {
+            initBg();
+            setTimeout(typeWriter, 1000);
+            fetchPosts();
+        };
+    </script>
+</body>
+</html>
