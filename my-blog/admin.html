@@ -3,87 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - 内容管理</title>
+    <title>Admin - Markdown Editor</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
     <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <style>
-        :root { --accent: #ffffff; --bg: #111; --panel: #1a1a1a; --border: #333; }
-        body { background: var(--bg); color: #eee; font-family: -apple-system, sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .admin-container { width: 100%; max-width: 900px; background: var(--panel); padding: 30px; border-radius: 16px; border: 1px solid var(--border); }
+        body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .admin-container { width: 100%; max-width: 900px; background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #333; }
+        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; outline: none; }
         
-        h2, h3 { margin-bottom: 20px; font-weight: 600; }
-        input { width: 100%; background: #222; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; outline: none; transition: 0.3s; }
-        input:focus { border-color: #666; }
+        .btn-pub { width: 100%; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; margin-bottom: 20px; }
+        .btn-cancel { background: #444; color: white; padding: 10px; border: none; border-radius: 8px; cursor: pointer; display: none; margin-bottom: 20px; width: 100%; }
         
-        /* 按钮样式 */
-        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-pub { flex: 1; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: var(--accent); color: #000; transition: 0.3s; }
-        .btn-pub:hover { opacity: 0.8; }
-        .btn-cancel { padding: 15px 25px; border-radius: 8px; border: 1px solid #444; background: transparent; color: #ccc; cursor: pointer; display: none; }
-
-        /* 文章列表样式 */
-        .post-item { background: #222; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2a; }
-        .post-info { display: flex; flex-direction: column; }
-        .post-date { font-size: 0.75rem; color: #666; }
-        .actions { display: flex; gap: 8px; }
-        .btn-edit { background: #444; color: white; border:none; padding: 6px 12px; border-radius: 6px; cursor:pointer; font-size: 0.85rem; }
-        .btn-del { background: #3d1a1a; color: #ff6666; border:1px solid #552222; padding: 6px 12px; border-radius: 6px; cursor:pointer; font-size: 0.85rem; }
-
-        /* 编辑器深色模式强制修正 */
-        .EasyMDEContainer { background: #222; color: white; border-radius: 8px; }
-        .editor-toolbar { background: #222 !important; border-color: var(--border) !important; opacity: 1 !important; }
-        .editor-toolbar button { color: #ccc !important; }
-        .editor-toolbar button:hover { background: #333 !important; }
-        .editor-toolbar button.active { background: #444 !important; }
-        .CodeMirror { background: #222 !important; color: #eee !important; border-color: var(--border) !important; height: 400px; }
+        .post-item { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .btn-edit { background: #4a4a4a; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; margin-right: 5px; }
+        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
+        
+        /* 编辑器深色模式样式修正 */
+        .EasyMDEContainer { background: #222; color: white; }
+        .editor-toolbar { background: #333 !important; border-color: #444 !important; }
+        .editor-toolbar button { color: white !important; }
+        .editor-toolbar button:hover, .editor-toolbar button.active { background: #555 !important; }
+        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; }
         .editor-preview { background: #111 !important; color: #eee !important; }
     </style>
 </head>
 <body>
     <div class="admin-container">
-        <h2 id="form-title">发布新文章</h2>
+        <h2 id="page-title">发布文章</h2>
         <input type="password" id="admin-pw" placeholder="管理密码">
         <input type="text" id="post-title" placeholder="文章标题">
         <textarea id="md-editor"></textarea>
-        
-        <div class="btn-group">
-            <button class="btn-pub" onclick="submitPost()" id="submit-btn">提交发布</button>
-            <button class="btn-cancel" onclick="resetForm()" id="cancel-btn">取消修改</button>
-        </div>
+        <button class="btn-pub" id="submit-btn" onclick="submitPost()">提交发布</button>
+        <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">取消修改</button>
 
         <div style="margin-top:50px;">
-            <h3>所有文章</h3>
+            <h3>管理文章</h3>
             <div id="manage-list">加载中...</div>
         </div>
     </div>
 
     <script>
-        let currentEditId = null; // 追踪当前是否在编辑状态
+        let editId = null; // 用于判断是新增还是修改
 
-        // 初始化 EasyMDE
-        const easyMDE = new EasyMDE({
-            element: document.getElementById("md-editor"),
+        const easyMDE = new EasyMDE({ 
+            element: document.getElementById("md-editor"), 
             spellChecker: false,
-            autosave: { enabled: true, uniqueId: "blog-editor" },
-            status: ["lines", "words", "cursor"],
             renderingConfig: { codeSyntaxHighlighting: true },
             toolbar: ["bold", "italic", "heading", "|", "quote", "code", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"]
         });
 
-        // 提交逻辑（自动识别是 新增 还是 修改）
         async function submitPost() {
             const password = document.getElementById('admin-pw').value;
             const title = document.getElementById('post-title').value;
             const content = easyMDE.value();
-
             if (!password || !title || !content) return alert('请填全内容');
 
             const payload = {
                 password,
                 title,
                 content,
-                action: currentEditId ? "update" : "create",
-                id: currentEditId
+                action: editId ? 'update' : 'create',
+                id: editId
             };
 
             try {
@@ -92,29 +72,23 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
                 if (res.ok) {
-                    alert(currentEditId ? '修改成功！' : '发布成功！');
-                    resetForm();
-                    loadPosts();
+                    alert('操作成功！');
+                    location.reload();
                 } else {
-                    alert('操作失败：' + await res.text());
+                    alert('失败：' + await res.text());
                 }
             } catch (e) { alert('网络错误'); }
         }
 
-        // 加载文章列表
         async function loadPosts() {
             try {
                 const res = await fetch('/manage');
                 const posts = await res.json();
                 document.getElementById('manage-list').innerHTML = posts.map(p => `
                     <div class="post-item">
-                        <div class="post-info">
-                            <span>${p.title}</span>
-                            <span class="post-date">${p.date || '无日期'}</span>
-                        </div>
-                        <div class="actions">
+                        <span>${p.title}</span>
+                        <div>
                             <button class="btn-edit" onclick="startEdit(${p.id})">修改</button>
                             <button class="btn-del" onclick="deletePost(${p.id})">删除</button>
                         </div>
@@ -123,49 +97,37 @@
             } catch (e) { document.getElementById('manage-list').innerText = '加载失败'; }
         }
 
-        // 进入编辑模式
         async function startEdit(id) {
             try {
                 const res = await fetch(`/posts?id=${id}`);
                 const post = await res.json();
-                
-                currentEditId = id;
+                editId = id;
                 document.getElementById('post-title').value = post.title;
                 easyMDE.value(post.content);
-                
-                // UI 切换
-                document.getElementById('form-title').innerText = "修改文章";
-                document.getElementById('submit-btn').innerText = "保存修改";
+                document.getElementById('page-title').innerText = "修改文章";
+                document.getElementById('submit-btn').innerText = "确认修改";
                 document.getElementById('cancel-btn').style.display = "block";
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (e) { alert('获取内容失败'); }
+                window.scrollTo(0,0);
+            } catch (e) { alert('加载失败'); }
         }
 
-        // 重置表单
-        function resetForm() {
-            currentEditId = null;
-            document.getElementById('post-title').value = "";
-            easyMDE.value("");
-            document.getElementById('form-title').innerText = "发布新文章";
-            document.getElementById('submit-btn').innerText = "提交发布";
-            document.getElementById('cancel-btn').style.display = "none";
+        function cancelEdit() {
+            location.reload();
         }
 
-        // 删除逻辑
         async function deletePost(id) {
             const password = document.getElementById('admin-pw').value;
-            if (!password || !confirm('确定永久删除这篇文章吗？')) return;
+            if (!password || !confirm('确定删除？')) return;
             try {
                 const res = await fetch('/manage', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password, action: 'delete', id })
                 });
-                if (res.ok) { loadPosts(); } 
+                if (res.ok) { alert('已删除'); loadPosts(); } 
                 else { alert('失败：' + await res.text()); }
             } catch (e) { alert('请求出错'); }
         }
-
         loadPosts();
     </script>
 </body>
