@@ -4,194 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fris's Blog</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
-        #bg-fixed { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
-        #location-tag { position: fixed; right: 30px; bottom: 30px; font-size: 0.85rem; color: rgba(255,255,255,0.7); z-index: 9999; letter-spacing: 1px; opacity: 0; transition: opacity 1s; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .squircle { border-radius: 35px; }
-        .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
-        .glass-panel { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); }
-        .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: 0.3s; }
-        .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
-        #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
-        .detail-card { padding: 45px; margin-top: 20px; }
-
-        /* --- 换行精准修复样式 --- */
+        body { background: #111; color: white; font-family: sans-serif; line-height: 1.6; }
+        .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding: 50px 0; }
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 30px; }
+        
+        /* --- 换行精准修复核心 CSS --- */
         .markdown-body { 
-            line-height: 1.8; 
-            color: rgba(255, 255, 255, 0.9); 
-            white-space: pre-wrap; /* 关键：保留所有空格和换行 */
+            white-space: pre-wrap; /* 保留所有换行符和空格 */
             word-wrap: break-word;
+            font-size: 1rem;
+            color: #ddd;
         }
-        /* 排除代码块中的样式干扰，确保代码块显示正常 */
+        .markdown-body p { 
+            margin: 0; /* 去掉段落边距，让换行完全由编辑器里的回车控制 */
+        }
+        .markdown-body h1, .markdown-body h2 { margin-top: 20px; margin-bottom: 10px; }
+        
+        /* 代码块显示修复 */
         .markdown-body pre { 
             background: #0d1117 !important; 
-            padding: 20px !important; 
-            border-radius: 16px !important; 
-            margin: 25px 0 !important; 
-            position: relative !important;
-            border: 1px solid rgba(255,255,255,0.15) !important;
-            overflow-x: auto !important;
-            white-space: pre !important; /* 代码块内不换行 */
+            padding: 16px !important; 
+            border-radius: 8px !important; 
+            white-space: pre !important; /* 代码块内部不需要 pre-wrap，防止代码乱换行 */
+            overflow-x: auto;
+            margin: 15px 0;
         }
-        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; white-space: pre !important; }
-        /* ----------------------- */
+        .markdown-body code { font-family: monospace; background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; }
+        /* --- 修复结束 --- */
 
-        .markdown-body a { color: inherit !important; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.3); transition: border-color 0.3s; }
-        .markdown-body a:hover { border-bottom-color: rgba(255, 255, 255, 0.8); }
-        .copy-btn { position: absolute; top: 12px; right: 12px; padding: 5px 10px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 11px; opacity: 0; transition: 0.2s; z-index: 100; }
-        .markdown-body pre:hover .copy-btn { opacity: 1; }
-        .copy-btn:hover { background: #fff; color: #000; }
-        .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; color: white; text-decoration: none; transition: 0.3s; }
-        #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre; }
+        .post-card { display: block; padding: 20px; margin-bottom: 20px; text-decoration: none; color: inherit; transition: 0.3s; }
+        .post-card:hover { background: rgba(255,255,255,0.1); }
+        .back-btn { cursor: pointer; opacity: 0.6; display: inline-block; margin-bottom: 20px; color: white; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div id="bg-fixed"></div>
-    <div class="overlay"></div>
-    <div id="location-tag"></div> 
-
-    <div id="list-ui">
-        <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
-            <div id="typewriter"></div>
-        </section>
-        <main class="blog-section" id="post-list"></main>
+    <div id="list-ui" class="blog-section">
+        <h1 style="text-align:center; margin-bottom:40px;">Fris's Blog</h1>
+        <div id="post-list"></div>
     </div>
 
-    <div id="detail-view" class="blog-section">
-        <a href="/" class="back-btn" id="final-back-link">← Back</a>
-        <div class="detail-card glass-panel squircle">
+    <div id="detail-view" class="blog-section" style="display:none;">
+        <a href="#" class="back-btn" onclick="showList()">← Back</a>
+        <div class="glass-panel">
             <div id="detail-content" class="markdown-body"></div>
         </div>
     </div>
 
     <script>
-        const locationData = { pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" }, mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" } };
-
-        function initScene() {
-            const bg = document.getElementById('bg-fixed');
-            const tag = document.getElementById('location-tag');
-            const isMobile = window.innerWidth <= 768;
-            const type = isMobile ? 'mobile' : 'pc';
-            const count = isMobile ? 4 : 24;
-            const num = Math.floor(Math.random() * count) + 1;
-            const src = `images/${type}/${num}.webp`;
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                bg.style.backgroundImage = `url('${src}')`;
-                bg.style.opacity = '1';
-                if (locationData[type][num]) {
-                    tag.innerText = locationData[type][num];
-                    tag.style.opacity = '1';
-                }
-            };
-        }
-
-        function runTypewriter() {
-            const el = document.getElementById('typewriter');
-            const text = "personal website started in 2023";
-            let i = 0; el.textContent = ""; 
-            function type() { if (i < text.length) { el.textContent += text.charAt(i); i++; setTimeout(type, 100); } }
-            type();
-        }
-
-        async function fetchPosts() {
-            try {
-                const res = await fetch('/posts');
-                const posts = await res.json();
-                document.getElementById('post-list').innerHTML = posts.map(p => `
-                    <a href="?id=${p.id}" class="post-card glass-panel squircle" onclick="event.preventDefault(); loadArticle(${p.id})">
-                        <h2>${p.title}</h2>
-                        <div style="margin-top:10px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
-                    </a>
-                `).join('');
-            } catch (e) { console.error("Fetch error:", e); }
-        }
-
-        // 配置 Marked 解析器
+        // 配置 Marked
         marked.setOptions({
-            breaks: true, // 关键：允许单行换行
-            gfm: true     // 启用 GitHub 风格
+            breaks: true, // 允许单回车换行
+            gfm: true
         });
 
-        async function loadArticle(id, pushState = true) {
-            try {
-                const res = await fetch(`/posts?id=${id}`);
-                const post = await res.json();
-                
-                document.getElementById('list-ui').style.display = 'none';
-                document.getElementById('detail-view').style.display = 'block';
-                
-                const contentEl = document.getElementById('detail-content');
-                // 解析 Markdown
-                contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
-
-                // 处理代码块
-                setTimeout(() => {
-                    document.querySelectorAll('#post-body pre').forEach(pre => {
-                        const code = pre.querySelector('code');
-                        if (code) {
-                            hljs.highlightElement(code); 
-                            if (!pre.querySelector('.copy-btn')) {
-                                const btn = document.createElement('button');
-                                btn.className = 'copy-btn';
-                                btn.innerText = 'Copy';
-                                pre.appendChild(btn);
-                                btn.onclick = () => {
-                                    navigator.clipboard.writeText(code.innerText).then(() => {
-                                        btn.innerText = 'Copied!';
-                                        setTimeout(() => btn.innerText = 'Copy', 2000);
-                                    });
-                                };
-                            }
-                        }
-                    });
-                }, 50);
-
-                window.scrollTo(0,0);
-                if (pushState) history.pushState({id}, '', `?id=${id}`);
-            } catch (e) { console.error("Load article error:", e); }
+        async function fetchPosts() {
+            const res = await fetch('/posts');
+            const posts = await res.json();
+            document.getElementById('post-list').innerHTML = posts.map(p => `
+                <a href="?id=${p.id}" class="post-card glass-panel" onclick="event.preventDefault(); loadArticle(${p.id})">
+                    <h2>${p.title}</h2>
+                    <div style="opacity:0.4; font-size:0.8rem;">${p.date || ''}</div>
+                </a>
+            `).join('');
         }
 
-        function showList(pushState = true) {
+        async function loadArticle(id, pushState = true) {
+            const res = await fetch(`/posts?id=${id}`);
+            const post = await res.json();
+            
+            document.getElementById('list-ui').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'block';
+            
+            const contentEl = document.getElementById('detail-content');
+            contentEl.innerHTML = `<h1>${post.title}</h1><div>${marked.parse(post.content)}</div>`;
+
+            // 代码高亮
+            document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+
+            if (pushState) history.pushState({id}, '', `?id=${id}`);
+            window.scrollTo(0,0);
+        }
+
+        function showList() {
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
-            if (pushState) history.pushState({}, '', window.location.pathname);
-            fetchPosts(); 
-            runTypewriter();
+            history.pushState({}, '', window.location.pathname);
         }
 
-        window.onpopstate = (e) => {
-            const id = new URLSearchParams(window.location.search).get('id');
-            id ? loadArticle(id, false) : showList(false);
-        };
-
-        document.getElementById('final-back-link').onclick = (e) => {
-            e.preventDefault();
-            showList();
-        };
-
         window.onload = () => {
-            initScene();
-            const id = new URLSearchParams(window.location.search).get('id');
-            if (id) {
-                loadArticle(id, false);
-            } else {
-                runTypewriter();
-                fetchPosts();
-            }
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            id ? loadArticle(id, false) : fetchPosts();
         };
     </script>
 </body>
