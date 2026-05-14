@@ -3,7 +3,7 @@ export async function onRequest(context) {
   const db = env.DB;
   const adminPassword = env.ADMIN_PASSWORD;
 
-  // GET 请求：获取文章列表（管理用）
+  // GET 请求：获取文章列表
   if (request.method === "GET") {
     const { results } = await db.prepare("SELECT id, title FROM posts ORDER BY id DESC").all();
     return new Response(JSON.stringify(results), {
@@ -16,32 +16,39 @@ export async function onRequest(context) {
     try {
       const body = await request.json();
 
-      // 1. 校验密码
+      // 1. 严格校验密码
       if (!adminPassword || body.password !== adminPassword) {
         return new Response("Unauthorized", { status: 401 });
       }
 
-      // 2. 删除逻辑
+      // 2. 执行删除逻辑
+      // 注意：前端传来的可能是字符串类型的 ID，这里用 Number 强制转换一下确保安全
       if (body.action === "delete") {
-        await db.prepare("DELETE FROM posts WHERE id = ?").bind(body.id).run();
-        return new Response("Deleted", { status: 200 });
+        if (!body.id) return new Response("Missing ID", { status: 400 });
+        
+        await db.prepare("DELETE FROM posts WHERE id = ?")
+                .bind(Number(body.id))
+                .run();
+                
+        return new Response("Deleted Successfully", { status: 200 });
       }
 
-      // 3. 发布逻辑 (注意这里字段名改成了 date)
+      // 3. 执行发布逻辑
       if (!body.title || !body.content) {
         return new Response("Missing fields", { status: 400 });
       }
 
-      // 使用你数据库中真实的字段名 'date'
       await db.prepare(
         "INSERT INTO posts (title, content, date) VALUES (?, ?, ?)"
       )
       .bind(body.title, body.content, new Date().toISOString().split('T')[0])
       .run();
 
-      return new Response("OK", { status: 200 });
+      return new Response("Post Created", { status: 200 });
+
     } catch (err) {
-      return new Response(err.message, { status: 500 });
+      // 如果数据库报错，返回具体错误信息，方便我们调试
+      return new Response("Database Error: " + err.message, { status: 500 });
     }
   }
 }
