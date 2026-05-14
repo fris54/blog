@@ -14,6 +14,8 @@
         .post-item { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
         .editor-toolbar, .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; }
+        .editor-toolbar a { color: white !important; }
+        .editor-toolbar a.active, .editor-toolbar a:hover { background: #444 !important; }
     </style>
 </head>
 <body>
@@ -31,7 +33,12 @@
     </div>
 
     <script>
-        var simplemde = new SimpleMDE({ element: document.getElementById("md-editor"), spellChecker: false });
+        // 核心修复：添加 toolbar 配置，确保 code (代码块) 按钮出现
+        var simplemde = new SimpleMDE({ 
+            element: document.getElementById("md-editor"), 
+            spellChecker: false,
+            toolbar: ["bold", "italic", "heading", "|", "quote", "code", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"]
+        });
 
         async function publishPost() {
             const password = document.getElementById('admin-pw').value;
