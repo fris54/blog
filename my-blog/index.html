@@ -15,45 +15,25 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
-        
-        /* 背景和遮罩 */
         #bg-fixed { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
-        
-        /* 位置标签 - 确保在最顶层且永远存在 */
-        #location-tag { 
-            position: fixed; right: 30px; bottom: 30px; 
-            font-size: 0.85rem; color: rgba(255,255,255,0.7); 
-            z-index: 9999; letter-spacing: 1px; 
-            opacity: 0; transition: opacity 1s;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
+        #location-tag { position: fixed; right: 30px; bottom: 30px; font-size: 0.85rem; color: rgba(255,255,255,0.7); z-index: 9999; letter-spacing: 1px; opacity: 0; transition: opacity 1s; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .squircle { border-radius: 35px; }
         .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
         .glass-panel { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); }
-
-        /* 文章卡片 */
         .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: 0.3s; }
         .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
-
-        /* 详情页 */
         #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
         .detail-card { padding: 45px; margin-top: 20px; }
-        .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); }
 
-        /* 超链接样式修改 */
-        .markdown-body a {
-            color: inherit !important;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            transition: border-color 0.3s;
+        /* --- 换行精准修复样式 --- */
+        .markdown-body { 
+            line-height: 1.8; 
+            color: rgba(255, 255, 255, 0.9); 
+            white-space: pre-wrap; /* 关键：保留所有空格和换行 */
+            word-wrap: break-word;
         }
-        .markdown-body a:hover {
-            border-bottom-color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* 核心：代码框外观强制修正 */
+        /* 排除代码块中的样式干扰，确保代码块显示正常 */
         .markdown-body pre { 
             background: #0d1117 !important; 
             padding: 20px !important; 
@@ -62,20 +42,16 @@
             position: relative !important;
             border: 1px solid rgba(255,255,255,0.15) !important;
             overflow-x: auto !important;
+            white-space: pre !important; /* 代码块内不换行 */
         }
-        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; }
+        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; white-space: pre !important; }
+        /* ----------------------- */
 
-        /* 复制按钮 */
-        .copy-btn {
-            position: absolute; top: 12px; right: 12px;
-            padding: 5px 10px; background: rgba(255,255,255,0.1);
-            color: #fff; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px; cursor: pointer; font-size: 11px;
-            opacity: 0; transition: 0.2s; z-index: 100;
-        }
+        .markdown-body a { color: inherit !important; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.3); transition: border-color 0.3s; }
+        .markdown-body a:hover { border-bottom-color: rgba(255, 255, 255, 0.8); }
+        .copy-btn { position: absolute; top: 12px; right: 12px; padding: 5px 10px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; font-size: 11px; opacity: 0; transition: 0.2s; z-index: 100; }
         .markdown-body pre:hover .copy-btn { opacity: 1; }
         .copy-btn:hover { background: #fff; color: #000; }
-
         .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; color: white; text-decoration: none; transition: 0.3s; }
         #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre; }
     </style>
@@ -111,7 +87,6 @@
             const count = isMobile ? 4 : 24;
             const num = Math.floor(Math.random() * count) + 1;
             const src = `images/${type}/${num}.webp`;
-            
             const img = new Image();
             img.src = src;
             img.onload = () => {
@@ -145,6 +120,12 @@
             } catch (e) { console.error("Fetch error:", e); }
         }
 
+        // 配置 Marked 解析器
+        marked.setOptions({
+            breaks: true, // 关键：允许单行换行
+            gfm: true     // 启用 GitHub 风格
+        });
+
         async function loadArticle(id, pushState = true) {
             try {
                 const res = await fetch(`/posts?id=${id}`);
@@ -154,8 +135,10 @@
                 document.getElementById('detail-view').style.display = 'block';
                 
                 const contentEl = document.getElementById('detail-content');
+                // 解析 Markdown
                 contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
 
+                // 处理代码块
                 setTimeout(() => {
                     document.querySelectorAll('#post-body pre').forEach(pre => {
                         const code = pre.querySelector('code');
