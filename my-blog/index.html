@@ -8,16 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
     <style>
-        /* 核心布局：背景不动，内容滚动 */
+        /* 核心布局：背景固定不动，内容随页面滚动 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             background: #111; 
             font-family: 'Noto Sans SC', sans-serif;
             color: white;
             overflow-x: hidden;
-            overflow-y: auto; /* 允许纵向滚动 */
+            overflow-y: auto; 
         }
 
+        /* 固定的背景容器 */
         #bg-fixed {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -35,7 +36,7 @@
             z-index: -1;
         }
 
-        /* 首页全屏区域 */
+        /* 首页全屏 Title 区域 */
         .hero {
             height: 100vh;
             display: flex;
@@ -51,7 +52,6 @@
             letter-spacing: 0.15em;
             cursor: pointer;
             text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: fadeIn 2.5s ease-out;
         }
 
         #typewriter {
@@ -61,7 +61,7 @@
             min-height: 1.5em;
         }
 
-        /* 博客列表区域 */
+        /* 博客文章列表区域 */
         .blog-section {
             width: 100%;
             max-width: 850px;
@@ -71,11 +71,11 @@
         }
 
         .post-card {
-            background: rgba(255, 255, 255, 0.05); /* 极低透明度 */
-            backdrop-filter: blur(15px);          /* 毛玻璃核心 */
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;                  /* 四角圆角 */
+            border-radius: 20px;
             padding: 40px;
             margin-bottom: 40px;
             transition: all 0.4s ease;
@@ -85,14 +85,13 @@
         .post-card:hover {
             transform: translateY(-8px);
             background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .post-card h2 { font-size: 1.8rem; margin-bottom: 15px; font-weight: 400; }
         .post-card p { font-size: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.8; }
         .post-meta { margin-top: 20px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.4); }
 
-        /* 固定不动的标签 */
+        /* 右下角固定标签 */
         #location-tag {
             position: fixed;
             right: 30px; bottom: 30px;
@@ -102,8 +101,6 @@
             opacity: 0;
             transition: opacity 2s;
         }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -125,9 +122,22 @@
 
     <script>
         const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
-        const locationData = { pc: { "1": "京都　龍安寺", "9": "東京駅" }, mobile: { "1": "河口湖" } };
+        
+        // 你的真实位置数据
+        const locationData = {
+            pc: {
+                "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷",
+                "5": "東京都庁", "6": " 广州 孙中山纪念堂", "7": "皇居　富士見櫓", "8": "大手町",
+                "9": "東京駅", "10": "大阪　茶屋町　美津濃", "11": "心斎橋", "12": "甲子園球場",
+                "13": "Bangkok", "14": "Bangkok", "15": "明治神宮", "16": "京都御苑",
+                "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "増上寺",
+                "21": "日本橋", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑"
+            },
+            mobile: {
+                "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本橋"
+            }
+        };
 
-        // 背景逻辑保持不变
         function initBg() {
             const bg = document.getElementById('bg-fixed');
             const tag = document.getElementById('location-tag');
@@ -142,39 +152,42 @@
             img.onload = () => {
                 bg.style.backgroundImage = `url('${src}')`;
                 bg.style.opacity = '1';
-                if (locationData[type][num]) {
+                // 仅当对应编号有地名时显示
+                if (locationData[type] && locationData[type][num]) {
                     tag.innerText = locationData[type][num];
                     tag.style.opacity = '1';
+                } else {
+                    tag.style.opacity = '0';
                 }
             };
         }
 
-        // 打字机逻辑
         let charIndex = 0;
         const typeText = "Currently nothing's here";
         function typeWriter() {
-            if (charIndex < typeText.length) {
-                document.getElementById('text').innerHTML += typeText.charAt(charIndex);
+            const textElement = document.getElementById('text');
+            if (textElement && charIndex < typeText.length) {
+                textElement.innerHTML += typeText.charAt(charIndex);
                 charIndex++;
                 setTimeout(typeWriter, 100);
             }
         }
 
-        // 获取后端 D1 数据
         async function fetchPosts() {
             try {
+                // 对接你之前绑定的 D1 /api/posts 接口
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
                 const listHtml = posts.map(post => `
                     <article class="post-card">
                         <h2>${post.title}</h2>
-                        <p>${post.excerpt || post.content.substring(0, 100) + '...'}</p>
-                        <div class="post-meta">${post.date}</div>
+                        <p>${post.excerpt || (post.content ? post.content.substring(0, 100) + '...' : '...')}</p>
+                        <div class="post-meta">${post.date || ''}</div>
                     </article>
                 `).join('');
                 document.getElementById('post-list').innerHTML = listHtml;
             } catch (err) {
-                document.getElementById('post-list').innerHTML = `<p>暂时无法加载文章</p>`;
+                document.getElementById('post-list').innerHTML = `<p style="text-align:center; opacity:0.5;">暂时无法加载文章</p>`;
             }
         }
 
