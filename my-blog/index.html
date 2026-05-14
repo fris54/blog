@@ -13,143 +13,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
     <style>
-        /* 1. 基础样式 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: #111; 
-            font-family: 'Noto Sans SC', sans-serif;
-            color: white;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        #bg-fixed {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -2;
-            background-position: center;
-            background-size: cover;
-            opacity: 0;
-            transition: opacity 1.5s ease-in-out;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            z-index: -1;
-        }
-
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(2.2rem, 10vw, 4.5rem);
-            letter-spacing: 0.15em;
-            cursor: pointer;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            animation: fadeIn 2.5s ease-out;
-        }
-
-        #typewriter {
-            margin-top: 12px;
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.8);
-            min-height: 1.5em;
-        }
-
-        #cursor {
-            display: inline-block;
-            width: 2px; height: 1.1rem;
-            background-color: white; margin-left: 5px;
-            vertical-align: middle;
-            animation: blink 1s infinite;
-        }
-
-        /* 2. 博文列表样式 */
-        .blog-section {
-            width: 90%;
-            max-width: 850px;
-            margin: 0 auto;
-            padding-bottom: 100px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .post-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 40px;
-            transition: all 0.4s ease;
-            cursor: pointer;
-        }
-
-        .post-card:hover {
-            transform: translateY(-8px);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
+        body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; overflow-y: auto; }
+        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-position: center; background-size: cover; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -1; }
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 10vw, 4.5rem); letter-spacing: 0.15em; cursor: pointer; text-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: fadeIn 2.5s ease-out; }
+        #typewriter { margin-top: 12px; font-size: 1.1rem; color: rgba(255, 255, 255, 0.8); min-height: 1.5em; }
+        #cursor { display: inline-block; width: 2px; height: 1.1rem; background-color: white; margin-left: 5px; vertical-align: middle; animation: blink 1s infinite; }
+        .blog-section { width: 90%; max-width: 850px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
+        .post-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 40px; margin-bottom: 40px; transition: all 0.4s ease; cursor: pointer; }
+        .post-card:hover { transform: translateY(-8px); background: rgba(255, 255, 255, 0.1); }
         .post-card h2 { font-weight: 400; margin-bottom: 15px; }
         .post-card p { color: rgba(255,255,255,0.7); line-height: 1.8; }
-
-        /* 3. 详情页 Markdown 专门排版 */
-        #detail-view {
-            display: none;
-            padding-top: 60px;
-        }
-
-        .markdown-body {
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.9);
-            word-break: break-word;
-        }
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 { 
-            margin-top: 1.5em; margin-bottom: 1em; font-weight: 400; color: #fff; 
-        }
-        .markdown-body p { margin-bottom: 1em; }
-        .markdown-body code { 
-            background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; font-family: monospace; 
-        }
-        .markdown-body pre { 
-            margin: 1.5em 0; padding: 1em; background: #0d1117; border-radius: 10px; overflow-x: auto; 
-        }
-        .markdown-body blockquote { 
-            border-left: 4px solid rgba(255,255,255,0.2); padding-left: 1em; color: rgba(255,255,255,0.5); font-style: italic; margin: 1em 0;
-        }
-        .markdown-body img { max-width: 100%; border-radius: 8px; }
-
-        /* 4. 位置信息 */
-        #location-tag {
-            position: fixed;
-            right: 30px; bottom: 30px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.8rem; font-weight: 300;
-            letter-spacing: 0.1em; z-index: 10;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            opacity: 0; transition: opacity 2s ease-in-out;
-        }
-
+        #detail-view { display: none; padding-top: 60px; }
+        .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); word-break: break-word; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { margin-top: 1.5em; margin-bottom: 1em; font-weight: 400; color: #fff; }
+        .markdown-body pre { margin: 1.5em 0; padding: 1em; background: #0d1117; border-radius: 10px; overflow-x: auto; }
+        .markdown-body blockquote { border-left: 4px solid rgba(255,255,255,0.2); padding-left: 1em; color: rgba(255,255,255,0.5); font-style: italic; }
+        #location-tag { position: fixed; right: 30px; bottom: 30px; color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; z-index: 10; opacity: 0; transition: opacity 2s ease-in-out; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 768px) {
-            #location-tag { right: 20px; bottom: 20px; font-size: 0.75rem; }
-        }
     </style>
 </head>
 <body>
-
     <div id="bg-fixed"></div>
     <div class="overlay"></div>
     <div id="location-tag"></div>
@@ -159,9 +46,7 @@
             <h1 onclick="location.reload()">Fris's Page</h1>
             <div id="typewriter"><span id="text"></span><span id="cursor"></span></div>
         </section>
-
-        <main class="blog-section" id="post-list">
-        </main>
+        <main class="blog-section" id="post-list"></main>
     </div>
 
     <div id="detail-view" class="blog-section">
@@ -171,19 +56,9 @@
 
     <script>
         const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
-
         const locationData = {
-            pc: {
-                "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷",
-                "5": "東京都庁", "6": " 广州 孙中山纪念堂", "7": "皇居　富士見櫓", "8": "大手町",
-                "9": "東京駅", "10": "大阪　茶屋町　美津濃", "11": "心斎橋", "12": "甲子園球場",
-                "13": "Bangkok", "14": "Bangkok", "15": "明治神宮", "16": "京都御苑",
-                "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "増上寺",
-                "21": "日本橋", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑"
-            },
-            mobile: {
-                "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本橋"
-            }
+            pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宮", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "増上寺", "21": "日本橋", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" },
+            mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本橋" }
         };
 
         function initScene() {
@@ -194,7 +69,6 @@
             const count = isMobile ? CONFIG.mobileCount : CONFIG.pcCount;
             const num = Math.floor(Math.random() * count) + 1;
             const src = `${CONFIG.basePath}${type}/${num}${CONFIG.extension}`;
-
             const img = new Image();
             img.src = src;
             img.onload = () => {
@@ -228,9 +102,8 @@
                 listEl.innerHTML = posts.map(p => `
                     <article class="post-card" onclick="showDetail(${p.id})">
                         <h2>${p.title}</h2>
-                        <p>${p.content.substring(0, 100).replace(/[#*`]/g, '')}...</p>
-                        // 把 p.created_at 改为 p.date
-                    <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${p.date || ''}</div>
+                        <p>${p.content.substring(0, 80).replace(/[#*`]/g, '')}...</p>
+                        <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${p.date || ''}</div>
                     </article>
                 `).join('');
             } catch (e) {
@@ -239,25 +112,26 @@
         }
 
         async function showDetail(id) {
-            const res = await fetch(`/api/posts?id=${id}`);
-            const post = await res.json();
-            
-            document.getElementById('list-ui').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'block';
-            
-            // 使用 marked 将 Markdown 源码转为 HTML，并进行高亮
-            const contentEl = document.getElementById('detail-content');
-            contentEl.innerHTML = `
-                <h1 style="font-size:2.5rem; margin-bottom:30px; font-weight: 400;">${post.title}</h1>
-                ${marked.parse(post.content)}
-            `;
-            
-            // 触发代码高亮
-            contentEl.querySelectorAll('pre code').forEach((el) => {
-                hljs.highlightElement(el);
-            });
-
-            window.scrollTo(0, 0);
+            try {
+                const res = await fetch(`/api/posts?id=${id}`);
+                const post = await res.json();
+                
+                document.getElementById('list-ui').style.display = 'none';
+                document.getElementById('detail-view').style.display = 'block';
+                
+                const contentEl = document.getElementById('detail-content');
+                // 使用 marked 渲染内容
+                contentEl.innerHTML = `
+                    <h1 style="font-size:2.5rem; margin-bottom:30px; font-weight: 400;">${post.title}</h1>
+                    <div>${marked.parse(post.content)}</div>
+                `;
+                
+                contentEl.querySelectorAll('pre code').forEach((el) => { hljs.highlightElement(el); });
+                window.scrollTo(0, 0);
+            } catch (e) {
+                console.error(e);
+                alert("加载失败，请检查数据库连接");
+            }
         }
 
         function showList() {
