@@ -7,33 +7,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; overflow-y: auto; }
-        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-position: center; background-size: cover; opacity: 0; transition: opacity 1.5s ease-in-out; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.2); z-index: -1; }
+        body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
+        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; opacity: 0; transition: opacity 1.5s; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: -1; }
         .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 10vw, 4.5rem); letter-spacing: 0.15em; cursor: pointer; text-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: fadeIn 2.5s ease-out; }
-        #typewriter { margin-top: 12px; font-size: 1.1rem; color: rgba(255, 255, 255, 0.8); min-height: 1.5em; }
-        #cursor { display: inline-block; width: 2px; height: 1.1rem; background-color: white; margin-left: 5px; vertical-align: middle; animation: blink 1s infinite; }
-        .blog-section { width: 90%; max-width: 850px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
-        .post-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 40px; margin-bottom: 40px; transition: all 0.4s ease; cursor: pointer; }
-        .post-card:hover { transform: translateY(-8px); background: rgba(255, 255, 255, 0.1); }
-        .post-card h2 { font-weight: 400; margin-bottom: 15px; }
-        .post-card p { color: rgba(255,255,255,0.7); line-height: 1.8; }
-        #detail-view { display: none; padding-top: 60px; }
-        .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); word-break: break-word; }
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 { margin-top: 1.5em; margin-bottom: 1em; font-weight: 400; color: #fff; }
-        .markdown-body pre { margin: 1.5em 0; padding: 1em; background: #0d1117; border-radius: 10px; overflow-x: auto; }
-        .markdown-body blockquote { border-left: 4px solid rgba(255,255,255,0.2); padding-left: 1em; color: rgba(255,255,255,0.5); font-style: italic; }
-        #location-tag { position: fixed; right: 30px; bottom: 30px; color: rgba(255, 255, 255, 0.7); font-size: 0.8rem; z-index: 10; opacity: 0; transition: opacity 2s ease-in-out; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem); cursor: pointer; }
+        .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; }
+        .post-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 15px; padding: 30px; margin-bottom: 30px; cursor: pointer; transition: 0.3s; }
+        .post-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); }
+        #detail-view { display: none; padding-top: 50px; }
+        .markdown-body { line-height: 1.8; opacity: 0.9; }
+        #location-tag { position: fixed; right: 20px; bottom: 20px; font-size: 0.8rem; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -44,94 +33,42 @@
     <div id="list-ui">
         <section class="hero">
             <h1 onclick="location.reload()">Fris's Page</h1>
-            <div id="typewriter"><span id="text"></span><span id="cursor"></span></div>
+            <div id="typewriter" style="margin-top:10px; opacity:0.7;">Currently nothing's here</div>
         </section>
         <main class="blog-section" id="post-list"></main>
     </div>
 
     <div id="detail-view" class="blog-section">
-        <div onclick="showList()" style="cursor:pointer; opacity:0.5; margin-bottom:40px; display: inline-block;">← Back</div>
+        <div onclick="showList()" style="cursor:pointer; margin-bottom:30px; opacity:0.5;">← Back</div>
         <div id="detail-content" class="markdown-body"></div>
     </div>
 
     <script>
-        const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
-        const locationData = {
-            pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宮", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "増上寺", "21": "日本橋", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" },
-            mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本橋" }
-        };
-
-        function initScene() {
-            const bg = document.getElementById('bg-fixed');
-            const tag = document.getElementById('location-tag');
-            const isMobile = window.innerWidth <= 768;
-            const type = isMobile ? 'mobile' : 'pc';
-            const count = isMobile ? CONFIG.mobileCount : CONFIG.pcCount;
-            const num = Math.floor(Math.random() * count) + 1;
-            const src = `${CONFIG.basePath}${type}/${num}${CONFIG.extension}`;
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-                bg.style.backgroundImage = `url('${src}')`;
-                bg.style.opacity = '1';
-                if (locationData[type][num.toString()]) {
-                    tag.innerText = locationData[type][num.toString()];
-                    tag.style.opacity = '1';
-                }
-            };
-        }
-
-        const typewriterText = "Currently nothing's here";
-        let charIndex = 0;
-        function typeOnce() {
-            const textElement = document.getElementById('text');
-            if (charIndex < typewriterText.length) {
-                textElement.textContent += typewriterText.charAt(charIndex);
-                charIndex++;
-                setTimeout(typeOnce, 120);
-            } else {
-                setTimeout(() => { document.getElementById('cursor').style.display = 'none'; }, 3000);
-            }
-        }
-
         async function fetchPosts() {
-            const listEl = document.getElementById('post-list');
             try {
-                const res = await fetch('/api/posts');
+                const res = await fetch('/posts');
                 const posts = await res.json();
-                listEl.innerHTML = posts.map(p => `
+                document.getElementById('post-list').innerHTML = posts.map(p => `
                     <article class="post-card" onclick="showDetail(${p.id})">
                         <h2>${p.title}</h2>
-                        <p>${p.content.substring(0, 80).replace(/[#*`]/g, '')}...</p>
-                        <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${p.date || ''}</div>
+                        <p style="margin-top:10px; opacity:0.6;">${p.content.substring(0,60)}...</p>
+                        <div style="margin-top:15px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
                     </article>
                 `).join('');
-            } catch (e) {
-                listEl.innerHTML = '<p style="text-align:center; opacity:0.5;">Waiting for posts...</p>';
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function showDetail(id) {
             try {
-                const res = await fetch(`/api/posts?id=${id}`);
+                const res = await fetch(`/posts?id=${id}`);
                 const post = await res.json();
-                
                 document.getElementById('list-ui').style.display = 'none';
                 document.getElementById('detail-view').style.display = 'block';
-                
                 const contentEl = document.getElementById('detail-content');
-                // 使用 marked 渲染内容
-                contentEl.innerHTML = `
-                    <h1 style="font-size:2.5rem; margin-bottom:30px; font-weight: 400;">${post.title}</h1>
-                    <div>${marked.parse(post.content)}</div>
-                `;
-                
-                contentEl.querySelectorAll('pre code').forEach((el) => { hljs.highlightElement(el); });
-                window.scrollTo(0, 0);
-            } catch (e) {
-                console.error(e);
-                alert("加载失败，请检查数据库连接");
-            }
+                contentEl.innerHTML = `<h1>${post.title}</h1><hr style="margin:20px 0; opacity:0.1;"><div>${marked.parse(post.content)}</div>`;
+                contentEl.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+                window.scrollTo(0,0);
+            } catch (e) { alert("文章加载失败"); }
         }
 
         function showList() {
@@ -139,9 +76,11 @@
             document.getElementById('detail-view').style.display = 'none';
         }
 
+        // 背景图随机逻辑 (简化版)
         window.onload = () => {
-            initScene();
-            setTimeout(typeOnce, 1200);
+            const bg = document.getElementById('bg-fixed');
+            bg.style.backgroundImage = `url('images/pc/${Math.floor(Math.random()*24)+1}.webp')`;
+            bg.style.opacity = '1';
             fetchPosts();
         };
     </script>
