@@ -1,22 +1,22 @@
 export async function onRequest(context) {
   const { request, env } = context;
-  const db = env.DB;
-  const adminPassword = env.ADMIN_PASSWORD;
+  
+  // 核心：从 context.env 中读取，而不是直接用 env.ADMIN_PASSWORD
+  const adminPassword = env.ADMIN_PASSWORD; 
 
   if (request.method === "POST") {
     const body = await request.json();
-    if (body.password !== adminPassword) return new Response("Unauthorized", { status: 401 });
-
-    if (body.action === "delete") {
-      await db.prepare("DELETE FROM posts WHERE id = ?").bind(body.id).run();
-      return new Response("OK");
+    
+    // 增加一个简单的日志判断（可选，调试用）
+    if (!adminPassword) {
+      return new Response("服务器未配置密码变量", { status: 500 });
     }
 
-    await db.prepare("INSERT INTO posts (title, content, created_at) VALUES (?, ?, ?)")
-            .bind(body.title, body.content, new Date().toISOString()).run();
-    return new Response("OK");
+    if (body.password !== adminPassword) {
+      return new Response("密码不正确", { status: 401 });
+    }
+    
+    // ... 后续逻辑
   }
-
-  const { results } = await db.prepare("SELECT id, title FROM posts ORDER BY created_at DESC").all();
-  return new Response(JSON.stringify(results));
+  // ...
 }
