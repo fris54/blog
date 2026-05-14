@@ -14,7 +14,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
         
-        /* 修复：将 width 改为 100vw 防止滚动条导致的背景位移 */
         #bg-fixed { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
         
@@ -51,6 +50,9 @@
         .back-btn:hover { opacity: 1; transform: translateX(-5px); }
 
         #location-tag { position: fixed; right: 30px; bottom: 30px; font-size: 0.8rem; opacity: 0; transition: opacity 1s; color: rgba(255,255,255,0.6); z-index: 10; letter-spacing: 1px; }
+
+        /* 打字机修复：pre 保持空白符 */
+        #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre; }
     </style>
 </head>
 <body>
@@ -61,7 +63,7 @@
     <div id="list-ui">
         <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); letter-spacing: 3px; cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
-            <div id="typewriter" style="margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em;"></div>
+            <div id="typewriter"></div>
         </section>
         <main class="blog-section" id="post-list"></main>
     </div>
@@ -93,15 +95,15 @@
             };
         }
 
-        // 打字机逻辑
+        // 修复空格显示的打字机逻辑
         function runTypewriter() {
             const el = document.getElementById('typewriter');
             const text = "Currently nothing's here";
             let i = 0;
-            el.innerText = "";
+            el.textContent = ""; 
             function type() {
                 if (i < text.length) {
-                    el.innerText += text.charAt(i);
+                    el.textContent += text.charAt(i);
                     i++;
                     setTimeout(type, 100);
                 }
@@ -154,7 +156,7 @@
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
             if(pushState) history.pushState({}, '', window.location.pathname);
-            runTypewriter(); // 回到首页重新跑打字机
+            runTypewriter(); 
         }
 
         window.onpopstate = (e) => {
@@ -168,7 +170,7 @@
             if (id) {
                 loadArticle(id, false);
             } else {
-                runTypewriter(); // 首页加载时跑打字机
+                runTypewriter(); 
                 fetchPosts();
             }
         };
