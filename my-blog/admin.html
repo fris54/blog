@@ -18,7 +18,7 @@
         .btn-edit { background: #4a4a4a; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; margin-right: 5px; }
         .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
         
-        /* 编辑器深色模式样式修正 */
+        /* 编辑器深色模式 */
         .EasyMDEContainer { background: #222; color: white; }
         .editor-toolbar { background: #333 !important; border-color: #444 !important; }
         .editor-toolbar button { color: white !important; }
@@ -43,7 +43,7 @@
     </div>
 
     <script>
-        let editId = null; // 用于判断是新增还是修改
+        let editId = null;
 
         const easyMDE = new EasyMDE({ 
             element: document.getElementById("md-editor"), 
