@@ -2,24 +2,27 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fris's Blog</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
     <style>
-        /* 1. 基础样式还原自原版 */
+        /* 1. 基础样式 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             background: #111; 
             font-family: 'Noto Sans SC', sans-serif;
             color: white;
             overflow-x: hidden;
-            overflow-y: auto; /* 允许滚动查看博文 */
+            overflow-y: auto;
         }
 
-        /* 背景固定不动 */
         #bg-fixed {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -37,7 +40,6 @@
             z-index: -1;
         }
 
-        /* 首页全屏区域 */
         .hero {
             height: 100vh;
             display: flex;
@@ -71,7 +73,7 @@
             animation: blink 1s infinite;
         }
 
-        /* 2. 博文列表样式（毛玻璃卡片） */
+        /* 2. 博文列表样式 */
         .blog-section {
             width: 90%;
             max-width: 850px;
@@ -101,27 +103,41 @@
         .post-card h2 { font-weight: 400; margin-bottom: 15px; }
         .post-card p { color: rgba(255,255,255,0.7); line-height: 1.8; }
 
-        /* 详情页视图 */
+        /* 3. 详情页 Markdown 专门排版 */
         #detail-view {
             display: none;
             padding-top: 60px;
-            white-space: pre-wrap;
-            line-height: 2;
         }
 
-        /* 3. 位置信息：固定在右下角（完全还原原版） */
+        .markdown-body {
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+            word-break: break-word;
+        }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { 
+            margin-top: 1.5em; margin-bottom: 1em; font-weight: 400; color: #fff; 
+        }
+        .markdown-body p { margin-bottom: 1em; }
+        .markdown-body code { 
+            background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; font-family: monospace; 
+        }
+        .markdown-body pre { 
+            margin: 1.5em 0; padding: 1em; background: #0d1117; border-radius: 10px; overflow-x: auto; 
+        }
+        .markdown-body blockquote { 
+            border-left: 4px solid rgba(255,255,255,0.2); padding-left: 1em; color: rgba(255,255,255,0.5); font-style: italic; margin: 1em 0;
+        }
+        .markdown-body img { max-width: 100%; border-radius: 8px; }
+
+        /* 4. 位置信息 */
         #location-tag {
             position: fixed;
-            right: 30px;
-            bottom: 30px;
+            right: 30px; bottom: 30px;
             color: rgba(255, 255, 255, 0.7);
-            font-size: 0.8rem;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            z-index: 10; /* 确保在最上层 */
+            font-size: 0.8rem; font-weight: 300;
+            letter-spacing: 0.1em; z-index: 10;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            opacity: 0;
-            transition: opacity 2s ease-in-out;
+            opacity: 0; transition: opacity 2s ease-in-out;
         }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -145,18 +161,17 @@
         </section>
 
         <main class="blog-section" id="post-list">
-            </main>
+        </main>
     </div>
 
     <div id="detail-view" class="blog-section">
-        <div onclick="showList()" style="cursor:pointer; opacity:0.5; margin-bottom:20px;">← Back</div>
-        <div id="detail-content"></div>
+        <div onclick="showList()" style="cursor:pointer; opacity:0.5; margin-bottom:40px; display: inline-block;">← Back</div>
+        <div id="detail-content" class="markdown-body"></div>
     </div>
 
     <script>
         const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
 
-        // 你的真实位置字典
         const locationData = {
             pc: {
                 "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷",
@@ -171,7 +186,6 @@
             }
         };
 
-        // 背景初始化逻辑
         function initScene() {
             const bg = document.getElementById('bg-fixed');
             const tag = document.getElementById('location-tag');
@@ -193,7 +207,6 @@
             };
         }
 
-        // 打字机逻辑（完全还原）
         const typewriterText = "Currently nothing's here";
         let charIndex = 0;
         function typeOnce() {
@@ -207,16 +220,15 @@
             }
         }
 
-        // 数据交互逻辑
         async function fetchPosts() {
             const listEl = document.getElementById('post-list');
             try {
-                const res = await fetch('/api/posts'); // 对应你的 D1 接口
+                const res = await fetch('/api/posts');
                 const posts = await res.json();
                 listEl.innerHTML = posts.map(p => `
                     <article class="post-card" onclick="showDetail(${p.id})">
                         <h2>${p.title}</h2>
-                        <p>${p.content.substring(0, 100)}...</p>
+                        <p>${p.content.substring(0, 100).replace(/[#*`]/g, '')}...</p>
                         <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${new Date(p.created_at).toLocaleDateString()}</div>
                     </article>
                 `).join('');
@@ -228,12 +240,22 @@
         async function showDetail(id) {
             const res = await fetch(`/api/posts?id=${id}`);
             const post = await res.json();
+            
             document.getElementById('list-ui').style.display = 'none';
             document.getElementById('detail-view').style.display = 'block';
-            document.getElementById('detail-content').innerHTML = `
-                <h1 style="font-size:2.5rem; margin-bottom:20px;">${post.title}</h1>
-                <div style="color:rgba(255,255,255,0.8)">${post.content}</div>
+            
+            // 使用 marked 将 Markdown 源码转为 HTML，并进行高亮
+            const contentEl = document.getElementById('detail-content');
+            contentEl.innerHTML = `
+                <h1 style="font-size:2.5rem; margin-bottom:30px; font-weight: 400;">${post.title}</h1>
+                ${marked.parse(post.content)}
             `;
+            
+            // 触发代码高亮
+            contentEl.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+
             window.scrollTo(0, 0);
         }
 
