@@ -15,49 +15,64 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
+        
+        /* 背景和遮罩 */
         #bg-fixed { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
+        
+        /* 位置标签 - 确保在最顶层且永远存在 */
+        #location-tag { 
+            position: fixed; right: 30px; bottom: 30px; 
+            font-size: 0.85rem; color: rgba(255,255,255,0.7); 
+            z-index: 9999; letter-spacing: 1px; 
+            opacity: 0; transition: opacity 1s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
         .squircle { border-radius: 35px; }
         .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
-        .glass-panel { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); }
-        
-        .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), background 0.3s; }
+        .glass-panel { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); }
+
+        /* 文章卡片 */
+        .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: 0.3s; }
         .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
 
+        /* 详情页 */
         #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
         .detail-card { padding: 45px; margin-top: 20px; }
-        
-        /* 核心：代码框外观强制样式 */
+        .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); }
+
+        /* 核心：代码框外观强制修正 */
         .markdown-body pre { 
             background: #0d1117 !important; 
             padding: 20px !important; 
-            border-radius: 15px !important; 
-            overflow: auto !important; 
-            margin: 24px 0 !important; 
+            border-radius: 16px !important; 
+            margin: 25px 0 !important; 
             position: relative !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            overflow-x: auto !important;
         }
-        .markdown-body code { font-family: 'Consolas', monospace; font-size: 0.95em; color: #e6edf3; }
+        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; }
 
-        /* 核心：复制按钮 */
+        /* 复制按钮 */
         .copy-btn {
-            position: absolute; top: 10px; right: 10px;
+            position: absolute; top: 12px; right: 12px;
             padding: 5px 10px; background: rgba(255,255,255,0.1);
             color: #fff; border: 1px solid rgba(255,255,255,0.2);
             border-radius: 6px; cursor: pointer; font-size: 11px;
-            opacity: 0; transition: 0.2s; z-index: 50;
+            opacity: 0; transition: 0.2s; z-index: 100;
         }
         .markdown-body pre:hover .copy-btn { opacity: 1; }
         .copy-btn:hover { background: #fff; color: #000; }
 
-        .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; transition: 0.3s; color: white; text-decoration: none; }
+        .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; color: white; text-decoration: none; transition: 0.3s; }
         #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre; }
     </style>
 </head>
 <body>
     <div id="bg-fixed"></div>
     <div class="overlay"></div>
-    <div id="list-ui">
+    <div id="location-tag"></div> <div id="list-ui">
         <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
             <div id="typewriter"></div>
@@ -66,7 +81,7 @@
     </div>
 
     <div id="detail-view" class="blog-section">
-        <a href="/" class="back-btn" id="btn-back">← Back</a>
+        <a href="/" class="back-btn" id="final-back-link">← Back</a>
         <div class="detail-card glass-panel squircle">
             <div id="detail-content" class="markdown-body"></div>
         </div>
@@ -75,15 +90,26 @@
     <script>
         const locationData = { pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" }, mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" } };
 
+        // 场景初始化：背景图 + 位置标签
         function initScene() {
             const bg = document.getElementById('bg-fixed');
+            const tag = document.getElementById('location-tag');
             const isMobile = window.innerWidth <= 768;
             const type = isMobile ? 'mobile' : 'pc';
-            const num = Math.floor(Math.random() * (isMobile ? 4 : 24)) + 1;
+            const count = isMobile ? 4 : 24;
+            const num = Math.floor(Math.random() * count) + 1;
             const src = `images/${type}/${num}.webp`;
+            
             const img = new Image();
             img.src = src;
-            img.onload = () => { bg.style.backgroundImage = `url('${src}')`; bg.style.opacity = '1'; };
+            img.onload = () => {
+                bg.style.backgroundImage = `url('${src}')`;
+                bg.style.opacity = '1';
+                if (locationData[type][num]) {
+                    tag.innerText = locationData[type][num];
+                    tag.style.opacity = '1';
+                }
+            };
         }
 
         function runTypewriter() {
@@ -101,30 +127,29 @@
                 document.getElementById('post-list').innerHTML = posts.map(p => `
                     <a href="?id=${p.id}" class="post-card glass-panel squircle" onclick="event.preventDefault(); loadArticle(${p.id})">
                         <h2>${p.title}</h2>
+                        <div style="margin-top:10px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
                     </a>
                 `).join('');
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Fetch error:", e); }
         }
 
         async function loadArticle(id, pushState = true) {
             try {
                 const res = await fetch(`/posts?id=${id}`);
                 const post = await res.json();
+                
                 document.getElementById('list-ui').style.display = 'none';
                 document.getElementById('detail-view').style.display = 'block';
                 
-                // 1. 渲染内容
                 const contentEl = document.getElementById('detail-content');
                 contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
 
-                // 2. 延迟处理代码块，确保 DOM 已经生成
+                // 核心：处理代码块样式和复制按钮
                 setTimeout(() => {
                     document.querySelectorAll('#post-body pre').forEach(pre => {
                         const code = pre.querySelector('code');
                         if (code) {
-                            // 高亮
-                            hljs.highlightElement(code);
-                            // 塞入按钮
+                            hljs.highlightElement(code); // 高亮
                             if (!pre.querySelector('.copy-btn')) {
                                 const btn = document.createElement('button');
                                 btn.className = 'copy-btn';
@@ -143,29 +168,36 @@
 
                 window.scrollTo(0,0);
                 if (pushState) history.pushState({id}, '', `?id=${id}`);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Load article error:", e); }
         }
 
         function showList(pushState = true) {
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
             if (pushState) history.pushState({}, '', window.location.pathname);
-            fetchPosts(); // 回到主页重新加载列表，解决“刷新后退不显示文章”
+            fetchPosts(); // 确保返回时列表正常加载
             runTypewriter();
         }
 
-        // 处理后退
         window.onpopstate = (e) => {
             const id = new URLSearchParams(window.location.search).get('id');
             id ? loadArticle(id, false) : showList(false);
         };
 
-        document.getElementById('btn-back').onclick = (e) => { e.preventDefault(); showList(); };
+        document.getElementById('final-back-link').onclick = (e) => {
+            e.preventDefault();
+            showList();
+        };
 
         window.onload = () => {
             initScene();
             const id = new URLSearchParams(window.location.search).get('id');
-            if (id) loadArticle(id, false); else { runTypewriter(); fetchPosts(); }
+            if (id) {
+                loadArticle(id, false);
+            } else {
+                runTypewriter();
+                fetchPosts();
+            }
         };
     </script>
 </body>
