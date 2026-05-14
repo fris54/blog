@@ -14,23 +14,13 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
         
-        /* 核心修复：width 从 100% 改为 100vw，防止滚动条导致的位移 */
-        #bg-fixed { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh; 
-            z-index: -2; 
-            background-size: cover; 
-            background-position: center; 
-            opacity: 0; 
-            transition: opacity 1.5s; 
-        }
-
+        /* 修复：将 width 改为 100vw 防止滚动条导致的背景位移 */
+        #bg-fixed { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.25); z-index: -1; }
+        
         .squircle { border-radius: 35px; }
         .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
+        
         .glass-panel {
             background: rgba(255, 255, 255, 0.08); 
             backdrop-filter: blur(20px); 
@@ -38,6 +28,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
         }
+
         .post-card { 
             display: block; 
             text-decoration: none; 
@@ -48,13 +39,17 @@
         }
         .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
         .post-card h2 { font-weight: 400; margin-bottom: 10px; font-size: 1.5rem; }
+
         #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
         .detail-card { padding: 45px; margin-top: 20px; }
+        
         .markdown-body { line-height: 1.8; color: rgba(255, 255, 255, 0.9); font-size: 1.05rem; }
         .markdown-body h1 { margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; font-weight: 400; }
         .markdown-body pre { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 20px; overflow-x: auto; margin: 20px 0; }
+
         .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; transition: 0.3s; font-size: 0.95rem; text-decoration: none; color: white; }
         .back-btn:hover { opacity: 1; transform: translateX(-5px); }
+
         #location-tag { position: fixed; right: 30px; bottom: 30px; font-size: 0.8rem; opacity: 0; transition: opacity 1s; color: rgba(255,255,255,0.6); z-index: 10; letter-spacing: 1px; }
     </style>
 </head>
@@ -66,7 +61,7 @@
     <div id="list-ui">
         <section style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 8vw, 4.5rem); letter-spacing: 3px; cursor: pointer;" onclick="location.href='/'">Fris's Page</h1>
-            <div style="margin-top:15px; opacity:0.5; font-weight:300;">Currently nothing's here</div>
+            <div id="typewriter" style="margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em;"></div>
         </section>
         <main class="blog-section" id="post-list"></main>
     </div>
@@ -79,7 +74,6 @@
     </div>
 
     <script>
-        // ... (后续脚本保持你原来的不变) ...
         const locationData = { pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" }, mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" } };
 
         function initScene() {
@@ -97,6 +91,22 @@
                 bg.style.opacity = '1';
                 if (locationData[type][num]) { tag.innerText = locationData[type][num]; tag.style.opacity = '1'; }
             };
+        }
+
+        // 打字机逻辑
+        function runTypewriter() {
+            const el = document.getElementById('typewriter');
+            const text = "Currently nothing's here";
+            let i = 0;
+            el.innerText = "";
+            function type() {
+                if (i < text.length) {
+                    el.innerText += text.charAt(i);
+                    i++;
+                    setTimeout(type, 100);
+                }
+            }
+            type();
         }
 
         async function fetchPosts() {
@@ -144,6 +154,7 @@
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
             if(pushState) history.pushState({}, '', window.location.pathname);
+            runTypewriter(); // 回到首页重新跑打字机
         }
 
         window.onpopstate = (e) => {
@@ -154,8 +165,12 @@
         window.onload = () => {
             initScene();
             const id = new URLSearchParams(window.location.search).get('id');
-            if (id) loadArticle(id, false);
-            fetchPosts();
+            if (id) {
+                loadArticle(id, false);
+            } else {
+                runTypewriter(); // 首页加载时跑打字机
+                fetchPosts();
+            }
         };
     </script>
 </body>
