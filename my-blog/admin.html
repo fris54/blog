@@ -1,80 +1,69 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Markdown Editor</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
-    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
-    <style>
-        body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .admin-container { width: 100%; max-width: 800px; background: #1a1a1a; padding: 30px; border-radius: 12px; }
-        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; outline: none; }
-        .btn-pub { width: 100%; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; }
-        .post-item { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
-        .editor-toolbar, .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; }
-    </style>
-</head>
-<body>
-    <div class="admin-container">
-        <h2>发布文章</h2>
-        <input type="password" id="admin-pw" placeholder="管理密码">
-        <input type="text" id="post-title" placeholder="文章标题">
-        <textarea id="md-editor"></textarea>
-        <button class="btn-pub" onclick="publishPost()">提交发布</button>
+<script>
+    var simplemde = new SimpleMDE({ 
+        element: document.getElementById("md-editor"), 
+        spellChecker: false,
+        renderingConfig: { singleLineBreaks: true } 
+    });
 
-        <div style="margin-top:50px;">
-            <h3>文章列表</h3>
-            <div id="manage-list">加载中...</div>
-        </div>
-    </div>
+    let currentEditId = null; // 记录当前是否在修改文章
 
-    <script>
-        var simplemde = new SimpleMDE({ element: document.getElementById("md-editor"), spellChecker: false });
+    async function publishPost() {
+        const password = document.getElementById('admin-pw').value;
+        const title = document.getElementById('post-list-title').value; // 假设标题 input id
+        const content = simplemde.value();
+        
+        if (!password || !title || !content) return alert('请填全内容');
 
-        async function publishPost() {
-            const password = document.getElementById('admin-pw').value;
-            const title = document.getElementById('post-title').value;
-            const content = simplemde.value();
-            if (!password || !title || !content) return alert('请填全内容');
+        const payload = { 
+            password, 
+            title, 
+            content,
+            id: currentEditId // 如果有值，后端会执行更新
+        };
 
-            try {
-                const res = await fetch('/manage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, title, content })
-                });
-                if (res.ok) { alert('成功！'); location.reload(); } 
-                else { alert('失败：' + await res.text()); }
-            } catch (e) { alert('网络错误'); }
-        }
+        try {
+            const res = await fetch('/manage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) { 
+                alert(currentEditId ? '更新成功！' : '发布成功！'); 
+                location.reload(); 
+            } else { 
+                alert('操作失败'); 
+            }
+        } catch (e) { alert('网络错误'); }
+    }
 
-        async function loadPosts() {
-            try {
-                const res = await fetch('/manage');
-                const posts = await res.json();
-                document.getElementById('manage-list').innerHTML = posts.map(p => `
-                    <div class="post-item"><span>${p.title}</span>
-                    <button class="btn-del" onclick="deletePost(${p.id})">删除</button></div>
-                `).join('');
-            } catch (e) { document.getElementById('manage-list').innerText = '加载失败'; }
-        }
+    // 【新增】进入编辑模式
+    async function editPost(id, title) {
+        currentEditId = id;
+        document.getElementById('post-list-title').value = title;
+        
+        // 从 API 获取该文章的原文内容
+        const res = await fetch(`/posts?id=${id}`);
+        const post = await res.json();
+        simplemde.value(post.content);
+        
+        // 滚动回顶部并提示
+        window.scrollTo(0, 0);
+        document.querySelector('h2').innerText = "正在修改文章：" + title;
+        document.querySelector('.btn-pub').innerText = "保存修改";
+    }
 
-        async function deletePost(id) {
-            const password = document.getElementById('admin-pw').value;
-            if (!password || !confirm('确定删除？')) return;
-            try {
-                const res = await fetch('/manage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, action: 'delete', id })
-                });
-                if (res.ok) { alert('已删除'); loadPosts(); } 
-                else { alert('失败：' + await res.text()); }
-            } catch (e) { alert('请求出错'); }
-        }
-        loadPosts();
-    </script>
-</body>
-</html>
+    async function loadPosts() {
+        const res = await fetch('/manage');
+        const posts = await res.json();
+        document.getElementById('manage-list').innerHTML = posts.map(p => `
+            <div class="post-item" style="display:flex; justify-content:space-between; margin-bottom:10px; background:#222; padding:10px; border-radius:15px;">
+                <span>${p.title}</span>
+                <div>
+                    <button onclick="editPost(${p.id}, '${p.title}')" style="margin-right:10px; cursor:pointer;">编辑</button>
+                    <button class="btn-del" onclick="deletePost(${p.id})">删除</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    loadPosts();
+</script>
