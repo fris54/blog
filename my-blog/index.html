@@ -13,16 +13,18 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
-        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; opacity: 0; transition: opacity 1.5s; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: -1; }
+        #bg-fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.5s; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: -1; }
         .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem); cursor: pointer; }
-        .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; }
-        .post-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 15px; padding: 30px; margin-bottom: 30px; cursor: pointer; transition: 0.3s; }
+        h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 8vw, 4rem); cursor: pointer; letter-spacing: 2px; }
+        .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
+        .post-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 15px; padding: 30px; margin-bottom: 30px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
         .post-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.1); }
-        #detail-view { display: none; padding-top: 50px; }
-        .markdown-body { line-height: 1.8; opacity: 0.9; }
-        #location-tag { position: fixed; right: 20px; bottom: 20px; font-size: 0.8rem; opacity: 0.6; }
+        .post-card h2 { font-weight: 400; margin-bottom: 10px; }
+        #detail-view { display: none; padding-top: 60px; }
+        .markdown-body { line-height: 1.8; color: rgba(255,255,255,0.9); }
+        .markdown-body pre { background: #0d1117; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 15px 0; }
+        #location-tag { position: fixed; right: 25px; bottom: 25px; font-size: 0.85rem; opacity: 0; transition: opacity 1s; color: rgba(255,255,255,0.7); z-index: 10; }
     </style>
 </head>
 <body>
@@ -33,42 +35,87 @@
     <div id="list-ui">
         <section class="hero">
             <h1 onclick="location.reload()">Fris's Page</h1>
-            <div id="typewriter" style="margin-top:10px; opacity:0.7;">Currently nothing's here</div>
+            <div id="typewriter" style="margin-top:15px; opacity:0.6; letter-spacing:1px;">Currently nothing's here</div>
         </section>
         <main class="blog-section" id="post-list"></main>
     </div>
 
     <div id="detail-view" class="blog-section">
-        <div onclick="showList()" style="cursor:pointer; margin-bottom:30px; opacity:0.5;">← Back</div>
+        <div onclick="showList()" style="cursor:pointer; margin-bottom:30px; opacity:0.5; display:inline-block;">← Back</div>
         <div id="detail-content" class="markdown-body"></div>
     </div>
 
     <script>
+        const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
+        const locationData = {
+            pc: { "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷", "5": "東京都庁", "6": "广州", "7": "皇居", "8": "大手町", "9": "東京駅", "10": "大阪", "11": "心斎橋", "12": "甲子園", "13": "Bangkok", "14": "Bangkok", "15": "明治神宫", "16": "京都御苑", "17": "京都御苑", "18": "東京都庁", "19": "新宿", "20": "增上寺", "21": "日本桥", "22": "東京都庁", "23": "新宿御苑", "24": "新宿御苑" },
+            mobile: { "1": "河口湖", "2": "東京タワー", "3": "東京タワー", "4": "日本桥" }
+        };
+
+        function initScene() {
+            const bg = document.getElementById('bg-fixed');
+            const tag = document.getElementById('location-tag');
+            const isMobile = window.innerWidth <= 768;
+            const type = isMobile ? 'mobile' : 'pc';
+            const count = isMobile ? CONFIG.mobileCount : CONFIG.pcCount;
+            const num = Math.floor(Math.random() * count) + 1;
+            
+            const src = `${CONFIG.basePath}${type}/${num}${CONFIG.extension}`;
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                bg.style.backgroundImage = `url('${src}')`;
+                bg.style.opacity = '1';
+                const locName = locationData[type][num.toString()];
+                if (locName) {
+                    tag.innerText = locName;
+                    tag.style.opacity = '1';
+                }
+            };
+        }
+
         async function fetchPosts() {
             try {
-                const res = await fetch('/posts');
+                const res = await fetch('/posts'); // 移除 /api 前缀
                 const posts = await res.json();
-                document.getElementById('post-list').innerHTML = posts.map(p => `
-                    <article class="post-card" onclick="showDetail(${p.id})">
-                        <h2>${p.title}</h2>
-                        <p style="margin-top:10px; opacity:0.6;">${p.content.substring(0,60)}...</p>
-                        <div style="margin-top:15px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
-                    </article>
-                `).join('');
-            } catch (e) { console.error(e); }
+                document.getElementById('post-list').innerHTML = posts.map(p => {
+                    // 预览过滤：移除 Markdown 符号
+                    const previewText = p.content.substring(0, 100)
+                        .replace(/[#*`>~-]/g, '') 
+                        .replace(/\[.*?\]\(.*?\)/g, '');
+                    return `
+                        <article class="post-card" onclick="showDetail(${p.id})">
+                            <h2>${p.title}</h2>
+                            <p style="opacity:0.6; line-height:1.6;">${previewText}...</p>
+                            <div style="margin-top:20px; font-size:0.8rem; opacity:0.3;">${p.date || ''}</div>
+                        </article>
+                    `;
+                }).join('');
+            } catch (e) { console.error("Fetch list error:", e); }
         }
 
         async function showDetail(id) {
             try {
-                const res = await fetch(`/posts?id=${id}`);
+                const res = await fetch(`/posts?id=${id}`); // 移除 /api 前缀
+                if (!res.ok) throw new Error("Post not found");
                 const post = await res.json();
+                
                 document.getElementById('list-ui').style.display = 'none';
                 document.getElementById('detail-view').style.display = 'block';
                 const contentEl = document.getElementById('detail-content');
-                contentEl.innerHTML = `<h1>${post.title}</h1><hr style="margin:20px 0; opacity:0.1;"><div>${marked.parse(post.content)}</div>`;
+                
+                contentEl.innerHTML = `
+                    <h1 style="font-size:2.2rem; margin-bottom:10px;">${post.title}</h1>
+                    <div style="opacity:0.3; margin-bottom:40px; font-size:0.9rem;">Published on ${post.date || 'Unknown'}</div>
+                    <div>${marked.parse(post.content)}</div>
+                `;
+                
                 contentEl.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 window.scrollTo(0,0);
-            } catch (e) { alert("文章加载失败"); }
+            } catch (e) { 
+                console.error("Detail error:", e);
+                alert("文章加载失败，请检查数据库绑定或路径"); 
+            }
         }
 
         function showList() {
@@ -76,11 +123,8 @@
             document.getElementById('detail-view').style.display = 'none';
         }
 
-        // 背景图随机逻辑 (简化版)
         window.onload = () => {
-            const bg = document.getElementById('bg-fixed');
-            bg.style.backgroundImage = `url('images/pc/${Math.floor(Math.random()*24)+1}.webp')`;
-            bg.style.opacity = '1';
+            initScene();
             fetchPosts();
         };
     </script>
