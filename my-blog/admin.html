@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Markdown Editor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <style>
+        :root { --bg: #111; --card: #1a1a1a; --text: #eee; --accent: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .admin-container { width: 100%; max-width: 900px; background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        h2 { font-weight: 300; letter-spacing: 2px; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8; }
+        input { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; outline: none; }
+        /* 适配 Markdown 编辑器深色皮肤 */
+        .editor-toolbar, .CodeMirror, .editor-preview-side { background: #222 !important; color: white !important; border-color: #444 !important; }
+        .editor-toolbar a { color: white !important; }
+        .CodeMirror-cursor { border-left: 1px solid white !important; }
+        .btn-pub { width: 100%; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: var(--accent); color: #000; margin-top: 20px; }
+        .post-item { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h2>发布文章 (Markdown)</h2>
+        <div class="input-group"><label>管理密码</label><input type="password" id="admin-pw"></div>
+        <div class="input-group"><label>文章标题</label><input type="text" id="post-title"></div>
+        <div class="input-group"><label>正文内容 (支持 Markdown)</label><textarea id="md-editor"></textarea></div>
+        <button class="btn-pub" onclick="publishPost()">提交发布</button>
+
+        <div style="margin-top:50px;">
+            <h3>文章管理</h3>
+            <div id="manage-list">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化编辑器
+        var simplemde = new SimpleMDE({ element: document.getElementById("md-editor"), spellChecker: false });
+
+        async function publishPost() {
+            const password = document.getElementById('admin-pw').value;
+            const title = document.getElementById('post-title').value;
+            const content = simplemde.value();
+            if (!password || !title || !content) return alert('请填全');
+
+            const res = await fetch('/api/manage', {
+                method: 'POST',
+                body: JSON.stringify({ password, title, content })
+            });
+            if (res.ok) { alert('成功！'); location.reload(); } else { alert('失败，请检查密码'); }
+        }
+
+        async function loadPosts() {
+            const res = await fetch('/api/manage');
+            const posts = await res.json();
+            document.getElementById('manage-list').innerHTML = posts.map(p => `
+                <div class="post-item"><span>${p.title}</span><button class="btn-del" onclick="deletePost(${p.id})">删除</button></div>
+            `).join('');
+        }
+
+        async function deletePost(id) {
+            const password = document.getElementById('admin-pw').value;
+            if (!password || !confirm('确定？')) return;
+            await fetch('/api/manage', {
+                method: 'POST',
+                body: JSON.stringify({ password, action: 'delete', id })
+            });
+            loadPosts();
+        }
+        loadPosts();
+    </script>
+</body>
+</html>
