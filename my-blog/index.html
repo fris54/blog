@@ -2,88 +2,79 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Fris's Blog</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Markdown Editor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
     <style>
-        /* 这里保留你要求的 Squircle 和 浅色毛玻璃 CSS */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #111; color: white; font-family: sans-serif; }
-        #bg-fixed { position: fixed; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; transition: 1s; opacity: 0; }
-        .squircle { border-radius: 35px; }
-        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); }
-        .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: 0.3s; cursor: pointer; }
-        #detail-view { display: none; padding: 60px 20px; min-height: 100vh; position: relative; z-index: 1; }
-        .markdown-body { line-height: 1.8; word-break: break-word; }
+        body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .admin-container { width: 100%; max-width: 800px; background: #1a1a1a; padding: 30px; border-radius: 12px; }
+        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; outline: none; }
+        .btn-pub { width: 100%; padding: 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; }
+        .post-item { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor:pointer; }
+        .editor-toolbar, .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; }
     </style>
 </head>
 <body>
-    <div id="bg-fixed"></div>
-    <div id="list-ui">
-        <h1 style="text-align:center; padding: 15vh 0 5vh; cursor:pointer;" onclick="location.href='/'">Fris's Page</h1>
-        <main style="max-width:800px; margin:0 auto;" id="post-list"></main>
-    </div>
-    <div id="detail-view">
-        <div style="max-width:800px; margin:0 auto;">
-            <a href="javascript:void(0)" onclick="showList()" style="color:white; opacity:0.5; text-decoration:none;">← Back</a>
-            <div class="glass squircle" style="padding:40px; margin-top:20px;">
-                <div id="detail-content" class="markdown-body"></div>
-            </div>
+    <div class="admin-container">
+        <h2>发布文章</h2>
+        <input type="password" id="admin-pw" placeholder="管理密码">
+        <input type="text" id="post-title" placeholder="文章标题">
+        <textarea id="md-editor"></textarea>
+        <button class="btn-pub" onclick="publishPost()">提交发布</button>
+
+        <div style="margin-top:50px;">
+            <h3>文章列表</h3>
+            <div id="manage-list">加载中...</div>
         </div>
     </div>
 
     <script>
-        // 修正换行逻辑
-        marked.setOptions({ breaks: true, gfm: true });
+        var simplemde = new SimpleMDE({ element: document.getElementById("md-editor"), spellChecker: false });
 
-        async function fetchPosts() {
+        async function publishPost() {
+            const password = document.getElementById('admin-pw').value;
+            const title = document.getElementById('post-title').value;
+            const content = simplemde.value();
+            if (!password || !title || !content) return alert('请填全内容');
+
             try {
-                const res = await fetch('/posts');
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, title, content })
+                });
+                if (res.ok) { alert('成功！'); location.reload(); } 
+                else { alert('失败：' + await res.text()); }
+            } catch (e) { alert('网络错误'); }
+        }
+
+        async function loadPosts() {
+            try {
+                const res = await fetch('/manage');
                 const posts = await res.json();
-                document.getElementById('post-list').innerHTML = posts.map(p => {
-                    const preview = p.content.substring(0, 80).replace(/[#*`>~-]/g, '');
-                    return `<div class="glass squircle post-card" onclick="loadArticle(${p.id})">
-                        <h2>${p.title}</h2>
-                        <p style="opacity:0.6; margin-top:10px;">${preview}...</p>
-                    </div>`;
-                }).join('');
-            } catch (e) { console.error("加载列表失败"); }
+                document.getElementById('manage-list').innerHTML = posts.map(p => `
+                    <div class="post-item"><span>${p.title}</span>
+                    <button class="btn-del" onclick="deletePost(${p.id})">删除</button></div>
+                `).join('');
+            } catch (e) { document.getElementById('manage-list').innerText = '加载失败'; }
         }
 
-        async function loadArticle(id, push = true) {
+        async function deletePost(id) {
+            const password = document.getElementById('admin-pw').value;
+            if (!password || !confirm('确定删除？')) return;
             try {
-                const res = await fetch(`/posts?id=${id}`);
-                const p = await res.json();
-                document.getElementById('list-ui').style.display = 'none';
-                document.getElementById('detail-view').style.display = 'block';
-                document.getElementById('detail-content').innerHTML = `<h1>${p.title}</h1><hr style="margin:20px 0;opacity:0.1">` + marked.parse(p.content);
-                if(push) history.pushState({id}, '', `?id=${id}`);
-                window.scrollTo(0,0);
-            } catch (e) { alert("文章加载失败"); }
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, action: 'delete', id })
+                });
+                if (res.ok) { alert('已删除'); loadPosts(); } 
+                else { alert('失败：' + await res.text()); }
+            } catch (e) { alert('请求出错'); }
         }
-
-        function showList() {
-            document.getElementById('list-ui').style.display = 'block';
-            document.getElementById('detail-view').style.display = 'none';
-            history.pushState({}, '', window.location.pathname);
-        }
-
-        window.onpopstate = (e) => {
-            if(e.state && e.state.id) loadArticle(e.state.id, false);
-            else showList();
-        };
-
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            if (id) loadArticle(id, false);
-            else fetchPosts();
-
-            const bg = document.getElementById('bg-fixed');
-            bg.style.backgroundImage = `url('images/pc/${Math.floor(Math.random()*24)+1}.webp')`;
-            bg.style.opacity = "1";
-        };
+        loadPosts();
     </script>
 </body>
 </html>
