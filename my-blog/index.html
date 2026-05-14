@@ -8,17 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
     <style>
-        /* 核心布局：背景固定不动，内容随页面滚动 */
+        /* 1. 基础样式还原自原版 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             background: #111; 
             font-family: 'Noto Sans SC', sans-serif;
             color: white;
             overflow-x: hidden;
-            overflow-y: auto; 
+            overflow-y: auto; /* 允许滚动查看博文 */
         }
 
-        /* 固定的背景容器 */
+        /* 背景固定不动 */
         #bg-fixed {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -32,11 +32,11 @@
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.2);
             z-index: -1;
         }
 
-        /* 首页全屏 Title 区域 */
+        /* 首页全屏区域 */
         .hero {
             height: 100vh;
             display: flex;
@@ -51,27 +51,37 @@
             font-size: clamp(2.2rem, 10vw, 4.5rem);
             letter-spacing: 0.15em;
             cursor: pointer;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: fadeIn 2.5s ease-out;
         }
 
         #typewriter {
-            margin-top: 15px;
+            margin-top: 12px;
             font-size: 1.1rem;
             color: rgba(255, 255, 255, 0.8);
             min-height: 1.5em;
         }
 
-        /* 博客文章列表区域 */
+        #cursor {
+            display: inline-block;
+            width: 2px; height: 1.1rem;
+            background-color: white; margin-left: 5px;
+            vertical-align: middle;
+            animation: blink 1s infinite;
+        }
+
+        /* 2. 博文列表样式（毛玻璃卡片） */
         .blog-section {
-            width: 100%;
+            width: 90%;
             max-width: 850px;
             margin: 0 auto;
-            padding: 50px 20px 100px 20px;
+            padding-bottom: 100px;
             position: relative;
+            z-index: 1;
         }
 
         .post-card {
-            background: rgba(255, 255, 255, 0.05); 
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -87,19 +97,37 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .post-card h2 { font-size: 1.8rem; margin-bottom: 15px; font-weight: 400; }
-        .post-card p { font-size: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.8; }
-        .post-meta { margin-top: 20px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.4); }
+        .post-card h2 { font-weight: 400; margin-bottom: 15px; }
+        .post-card p { color: rgba(255,255,255,0.7); line-height: 1.8; }
 
-        /* 右下角固定标签 */
+        /* 详情页视图 */
+        #detail-view {
+            display: none;
+            padding-top: 60px;
+            white-space: pre-wrap;
+            line-height: 2;
+        }
+
+        /* 3. 位置信息：固定在右下角（完全还原原版） */
         #location-tag {
             position: fixed;
-            right: 30px; bottom: 30px;
-            color: rgba(255, 255, 255, 0.6);
+            right: 30px;
+            bottom: 30px;
+            color: rgba(255, 255, 255, 0.7);
             font-size: 0.8rem;
-            z-index: 10;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            z-index: 10; /* 确保在最上层 */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             opacity: 0;
-            transition: opacity 2s;
+            transition: opacity 2s ease-in-out;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            #location-tag { right: 20px; bottom: 20px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -109,21 +137,25 @@
     <div class="overlay"></div>
     <div id="location-tag"></div>
 
-    <div class="container">
+    <div id="list-ui">
         <section class="hero">
             <h1 onclick="location.reload()">Fris's Page</h1>
-            <div id="typewriter"><span id="text"></span></div>
+            <div id="typewriter"><span id="text"></span><span id="cursor"></span></div>
         </section>
 
         <main class="blog-section" id="post-list">
-            <div style="text-align: center; opacity: 0.5;">Loading posts...</div>
-        </main>
+            </main>
+    </div>
+
+    <div id="detail-view" class="blog-section">
+        <div onclick="showList()" style="cursor:pointer; opacity:0.5; margin-bottom:20px;">← Back</div>
+        <div id="detail-content"></div>
     </div>
 
     <script>
         const CONFIG = { pcCount: 24, mobileCount: 4, basePath: 'images/', extension: '.webp' };
-        
-        // 你的真实位置数据
+
+        // 你的真实位置字典
         const locationData = {
             pc: {
                 "1": "京都　龍安寺", "2": "関西", "3": "忍野八海", "4": "渋谷",
@@ -138,7 +170,8 @@
             }
         };
 
-        function initBg() {
+        // 背景初始化逻辑
+        function initScene() {
             const bg = document.getElementById('bg-fixed');
             const tag = document.getElementById('location-tag');
             const isMobile = window.innerWidth <= 768;
@@ -146,54 +179,71 @@
             const count = isMobile ? CONFIG.mobileCount : CONFIG.pcCount;
             const num = Math.floor(Math.random() * count) + 1;
             const src = `${CONFIG.basePath}${type}/${num}${CONFIG.extension}`;
-            
+
             const img = new Image();
             img.src = src;
             img.onload = () => {
                 bg.style.backgroundImage = `url('${src}')`;
                 bg.style.opacity = '1';
-                // 仅当对应编号有地名时显示
-                if (locationData[type] && locationData[type][num]) {
-                    tag.innerText = locationData[type][num];
+                if (locationData[type][num.toString()]) {
+                    tag.innerText = locationData[type][num.toString()];
                     tag.style.opacity = '1';
-                } else {
-                    tag.style.opacity = '0';
                 }
             };
         }
 
+        // 打字机逻辑（完全还原）
+        const typewriterText = "Currently nothing's here";
         let charIndex = 0;
-        const typeText = "Currently nothing's here";
-        function typeWriter() {
+        function typeOnce() {
             const textElement = document.getElementById('text');
-            if (textElement && charIndex < typeText.length) {
-                textElement.innerHTML += typeText.charAt(charIndex);
+            if (charIndex < typewriterText.length) {
+                textElement.textContent += typewriterText.charAt(charIndex);
                 charIndex++;
-                setTimeout(typeWriter, 100);
+                setTimeout(typeOnce, 120);
+            } else {
+                setTimeout(() => { document.getElementById('cursor').style.display = 'none'; }, 3000);
             }
         }
 
+        // 数据交互逻辑
         async function fetchPosts() {
+            const listEl = document.getElementById('post-list');
             try {
-                // 对接你之前绑定的 D1 /api/posts 接口
-                const response = await fetch('/api/posts');
-                const posts = await response.json();
-                const listHtml = posts.map(post => `
-                    <article class="post-card">
-                        <h2>${post.title}</h2>
-                        <p>${post.excerpt || (post.content ? post.content.substring(0, 100) + '...' : '...')}</p>
-                        <div class="post-meta">${post.date || ''}</div>
+                const res = await fetch('/api/posts'); // 对应你的 D1 接口
+                const posts = await res.json();
+                listEl.innerHTML = posts.map(p => `
+                    <article class="post-card" onclick="showDetail(${p.id})">
+                        <h2>${p.title}</h2>
+                        <p>${p.content.substring(0, 100)}...</p>
+                        <div style="margin-top:20px; font-size:0.8rem; opacity:0.4;">${new Date(p.created_at).toLocaleDateString()}</div>
                     </article>
                 `).join('');
-                document.getElementById('post-list').innerHTML = listHtml;
-            } catch (err) {
-                document.getElementById('post-list').innerHTML = `<p style="text-align:center; opacity:0.5;">暂时无法加载文章</p>`;
+            } catch (e) {
+                listEl.innerHTML = '<p style="text-align:center; opacity:0.5;">Waiting for posts...</p>';
             }
+        }
+
+        async function showDetail(id) {
+            const res = await fetch(`/api/posts?id=${id}`);
+            const post = await res.json();
+            document.getElementById('list-ui').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'block';
+            document.getElementById('detail-content').innerHTML = `
+                <h1 style="font-size:2.5rem; margin-bottom:20px;">${post.title}</h1>
+                <div style="color:rgba(255,255,255,0.8)">${post.content}</div>
+            `;
+            window.scrollTo(0, 0);
+        }
+
+        function showList() {
+            document.getElementById('list-ui').style.display = 'block';
+            document.getElementById('detail-view').style.display = 'none';
         }
 
         window.onload = () => {
-            initBg();
-            setTimeout(typeWriter, 1000);
+            initScene();
+            setTimeout(typeOnce, 1200);
             fetchPosts();
         };
     </script>
