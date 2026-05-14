@@ -7,9 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Noto+Sans+SC:wght@300&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #111; font-family: 'Noto Sans SC', sans-serif; color: white; overflow-x: hidden; }
@@ -18,31 +20,32 @@
         .squircle { border-radius: 35px; }
         .blog-section { width: 90%; max-width: 800px; margin: 0 auto; padding-bottom: 100px; position: relative; z-index: 1; }
         .glass-panel { background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); }
+        
         .post-card { display: block; text-decoration: none; color: inherit; padding: 30px; margin-bottom: 25px; transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), background 0.3s; }
         .post-card:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.12); }
+
         #detail-view { display: none; padding-top: 60px; min-height: 100vh; }
         .detail-card { padding: 45px; margin-top: 20px; }
         
-        /* 强制：代码框显示 */
+        /* 核心：代码框外观强制样式 */
         .markdown-body pre { 
-            background: #0d1117 !important; /* 强制黑色背景 */
+            background: #0d1117 !important; 
             padding: 20px !important; 
             border-radius: 15px !important; 
             overflow: auto !important; 
-            margin: 20px 0 !important; 
+            margin: 24px 0 !important; 
             position: relative !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            display: block !important; /* 确保它是块级元素 */
+            border: 1px solid rgba(255,255,255,0.1) !important;
         }
-        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; color: #e6edf3 !important; background: none !important; }
+        .markdown-body code { font-family: 'Consolas', monospace; font-size: 0.95em; color: #e6edf3; }
 
-        /* 复制按钮 */
+        /* 核心：复制按钮 */
         .copy-btn {
             position: absolute; top: 10px; right: 10px;
             padding: 5px 10px; background: rgba(255,255,255,0.1);
             color: #fff; border: 1px solid rgba(255,255,255,0.2);
             border-radius: 6px; cursor: pointer; font-size: 11px;
-            opacity: 0.8; z-index: 99; transition: 0.2s;
+            opacity: 0; transition: 0.2s; z-index: 50;
         }
         .markdown-body pre:hover .copy-btn { opacity: 1; }
         .copy-btn:hover { background: #fff; color: #000; }
@@ -63,7 +66,7 @@
     </div>
 
     <div id="detail-view" class="blog-section">
-        <a href="/" class="back-btn" id="go-back">← Back</a>
+        <a href="/" class="back-btn" id="btn-back">← Back</a>
         <div class="detail-card glass-panel squircle">
             <div id="detail-content" class="markdown-body"></div>
         </div>
@@ -78,7 +81,8 @@
             const type = isMobile ? 'mobile' : 'pc';
             const num = Math.floor(Math.random() * (isMobile ? 4 : 24)) + 1;
             const src = `images/${type}/${num}.webp`;
-            const img = new Image(); img.src = src;
+            const img = new Image();
+            img.src = src;
             img.onload = () => { bg.style.backgroundImage = `url('${src}')`; bg.style.opacity = '1'; };
         }
 
@@ -109,30 +113,33 @@
                 document.getElementById('list-ui').style.display = 'none';
                 document.getElementById('detail-view').style.display = 'block';
                 
+                // 1. 渲染内容
                 const contentEl = document.getElementById('detail-content');
-                // 渲染 HTML
                 contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
 
-                // 强制处理所有 pre 标签
-                const pres = contentEl.querySelectorAll('pre');
-                pres.forEach(pre => {
-                    const code = pre.querySelector('code') || pre; // 兼容没写 code 标签的情况
-                    hljs.highlightElement(code);
-                    
-                    // 注入复制按钮
-                    if (!pre.querySelector('.copy-btn')) {
-                        const btn = document.createElement('button');
-                        btn.className = 'copy-btn';
-                        btn.innerText = 'Copy';
-                        pre.appendChild(btn);
-                        btn.onclick = () => {
-                            navigator.clipboard.writeText(code.innerText).then(() => {
-                                btn.innerText = 'Copied!';
-                                setTimeout(() => btn.innerText = 'Copy', 2000);
-                            });
-                        };
-                    }
-                });
+                // 2. 延迟处理代码块，确保 DOM 已经生成
+                setTimeout(() => {
+                    document.querySelectorAll('#post-body pre').forEach(pre => {
+                        const code = pre.querySelector('code');
+                        if (code) {
+                            // 高亮
+                            hljs.highlightElement(code);
+                            // 塞入按钮
+                            if (!pre.querySelector('.copy-btn')) {
+                                const btn = document.createElement('button');
+                                btn.className = 'copy-btn';
+                                btn.innerText = 'Copy';
+                                pre.appendChild(btn);
+                                btn.onclick = () => {
+                                    navigator.clipboard.writeText(code.innerText).then(() => {
+                                        btn.innerText = 'Copied!';
+                                        setTimeout(() => btn.innerText = 'Copy', 2000);
+                                    });
+                                };
+                            }
+                        }
+                    });
+                }, 50);
 
                 window.scrollTo(0,0);
                 if (pushState) history.pushState({id}, '', `?id=${id}`);
@@ -143,16 +150,17 @@
             document.getElementById('list-ui').style.display = 'block';
             document.getElementById('detail-view').style.display = 'none';
             if (pushState) history.pushState({}, '', window.location.pathname);
-            fetchPosts(); 
+            fetchPosts(); // 回到主页重新加载列表，解决“刷新后退不显示文章”
             runTypewriter();
         }
 
+        // 处理后退
         window.onpopstate = (e) => {
             const id = new URLSearchParams(window.location.search).get('id');
             id ? loadArticle(id, false) : showList(false);
         };
 
-        document.getElementById('go-back').onclick = (e) => { e.preventDefault(); showList(); };
+        document.getElementById('btn-back').onclick = (e) => { e.preventDefault(); showList(); };
 
         window.onload = () => {
             initScene();
