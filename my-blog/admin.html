@@ -32,6 +32,7 @@
         <h2 id="page-title">发布文章</h2>
         <input type="password" id="admin-pw" placeholder="管理密码">
         <input type="text" id="post-title" placeholder="文章标题">
+        <input type="date" id="post-date" placeholder="发布日期 (留空则自动填写今日)" style="margin-bottom: 15px;">
         <textarea id="md-editor"></textarea>
         <button class="btn-pub" id="submit-btn" onclick="submitPost()">提交发布</button>
         <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">取消修改</button>
@@ -55,6 +56,7 @@
         async function submitPost() {
             const password = document.getElementById('admin-pw').value;
             const title = document.getElementById('post-title').value;
+            const date = document.getElementById('post-date').value;
             const content = easyMDE.value();
             if (!password || !title || !content) return alert('请填全内容');
 
@@ -62,6 +64,7 @@
                 password,
                 title,
                 content,
+                date,
                 action: editId ? 'update' : 'create',
                 id: editId
             };
@@ -103,6 +106,7 @@
                 const post = await res.json();
                 editId = id;
                 document.getElementById('post-title').value = post.title;
+                document.getElementById('post-date').value = post.date || '';
                 easyMDE.value(post.content);
                 document.getElementById('page-title').innerText = "修改文章";
                 document.getElementById('submit-btn').innerText = "确认修改";
