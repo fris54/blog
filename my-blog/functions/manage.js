@@ -26,15 +26,22 @@ export async function onRequest(context) {
 
       // 更新逻辑
       if (body.action === "update") {
-        await db.prepare("UPDATE posts SET title = ?, content = ? WHERE id = ?")
-          .bind(body.title, body.content, Number(body.id))
-          .run();
+        if (body.date) {
+            await db.prepare("UPDATE posts SET title = ?, content = ?, date = ? WHERE id = ?")
+              .bind(body.title, body.content, body.date, Number(body.id))
+              .run();
+        } else {
+            await db.prepare("UPDATE posts SET title = ?, content = ? WHERE id = ?")
+              .bind(body.title, body.content, Number(body.id))
+              .run();
+        }
         return new Response("Updated", { status: 200 });
       }
 
       // 发布逻辑
+      const postDate = body.date || new Date().toISOString().split('T')[0];
       await db.prepare("INSERT INTO posts (title, content, date) VALUES (?, ?, ?)")
-        .bind(body.title, body.content, new Date().toISOString().split('T')[0])
+        .bind(body.title, body.content, postDate)
         .run();
 
       return new Response("Post Created", { status: 200 });
