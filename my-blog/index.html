@@ -39,7 +39,7 @@
             white-space: normal; /* 解决 list 内容与上下空2行的问题 */
             list-style-position: inside; /* 让左边的点与普通文本保持同样缩进 */
             padding-left: 0;
-            margin-top: 0.5em;
+            margin-top: 0em; /* 减小普通句子和列表的距离 */
             margin-bottom: 0.5em;
         }
         .markdown-body li {
@@ -69,15 +69,21 @@
             padding: 2px 6px !important;
             border-radius: 8px !important;
             color: #fff !important; 
-            white-space: pre-wrap !important; 
-            word-break: break-word !important; 
+            display: inline-block !important; /* 整体不断开，如果太长换到下一行 */
+            white-space: nowrap !important;
+            max-width: 100%;
+            overflow-x: auto;
+            vertical-align: baseline;
+            word-break: keep-all !important; 
         }
         .markdown-body pre code { 
             background: transparent !important; 
             padding: 0 !important;
             color: inherit !important;
+            display: block !important;
             white-space: pre !important; 
             word-break: normal !important; 
+            overflow-x: visible;
         }
 
         .markdown-body a { color: inherit !important; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.3); transition: border-color 0.3s; }
@@ -168,7 +174,14 @@
                 document.getElementById('detail-view').style.display = 'block';
                 
                 const contentEl = document.getElementById('detail-content');
-                contentEl.innerHTML = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
+                let html = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
+                
+                if (post.appendix) {
+                    const align = post.appendix.align === 'right' ? 'right' : 'left';
+                    html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${marked.parse(post.appendix.content)}</div>`;
+                }
+
+                contentEl.innerHTML = html;
 
                 setTimeout(() => {
                     document.querySelectorAll('#post-body pre').forEach(pre => {
