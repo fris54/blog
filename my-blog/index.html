@@ -197,7 +197,10 @@
                 let html = `<h1>${post.title}</h1><div id="post-body">${parsedBody}</div>`;
                 
                 if (post.appendix) {
-                    const align = post.appendix.align === 'right' ? 'right' : 'left';
+                    let align = 'left';
+                    if (post.appendix.align === 'right') align = 'right';
+                    if (post.appendix.align === 'center') align = 'center';
+                    
                     const processedAppendix = preserveEmptyLines(post.appendix.content);
                     const parsedAppendix = marked.parse(processedAppendix).replace(/>\n\s*</g, '><');
                     html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${parsedAppendix}</div>`;
