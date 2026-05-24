@@ -38,6 +38,7 @@
         .markdown-body p { margin-bottom: 1.2em; }
         .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { margin-top: 1.5em; margin-bottom: 0.8em; }
         .markdown-body blockquote { margin: 1.2em 0; padding-left: 1em; border-left: 4px solid #444; color: #aaa; }
+        .appendix-box *:last-child { margin-bottom: 0 !important; } /* 消除附加内容最后一行多余的底边距，以便完美居中 */
         
         /* 列表修复 */
         .markdown-body ul, .markdown-body ol {
@@ -203,7 +204,7 @@
                     
                     const processedAppendix = preserveEmptyLines(post.appendix.content);
                     const parsedAppendix = marked.parse(processedAppendix).replace(/>\n\s*</g, '><');
-                    html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${parsedAppendix}</div>`;
+                    html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 45px; opacity: 0.6; font-size: 0.9em;" class="markdown-body appendix-box">${parsedAppendix}</div>`;
                 }
 
                 contentEl.innerHTML = html;
