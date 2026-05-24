@@ -61,23 +61,19 @@
             white-space: pre !important; /* 代码块内不换行 */
         }
         
-        /* 行内代码样式修复，使其与普通文字能区分开 */
+        /* 行内代码样式修复，保留特殊字体，去掉框 */
         .markdown-body code { 
             font-family: 'Consolas', 'Monaco', monospace !important; 
-            font-size: 0.9rem !important; 
-            background: rgba(255, 255, 255, 0.15) !important; 
-            padding: 2px 6px !important;
-            border-radius: 8px !important;
-            color: #fff !important; 
+            font-size: 0.95rem !important; 
+            background: transparent !important; 
+            padding: 0 !important;
+            color: inherit !important; 
             display: inline-block !important; /* 整体不断开，如果太长换到下一行 */
-            white-space: pre-wrap !important; /* 如果真的比一行还长，允许它换行，不加 scroll 否则会触发 baseline 偏移 */
+            white-space: pre-wrap !important; 
             word-break: break-all !important; 
             vertical-align: baseline;
         }
         .markdown-body pre code { 
-            background: transparent !important; 
-            padding: 0 !important;
-            color: inherit !important;
             display: block !important;
             white-space: pre !important; 
             word-break: normal !important; 
@@ -163,6 +159,20 @@
             gfm: true
         });
 
+        // 预处理 Markdown：保护多余的空行，将其转换为可见的空段落
+        function preserveEmptyLines(text) {
+            if (!text) return '';
+            let blocks = text.split(/(```[\s\S]*?```)/);
+            for (let i = 0; i < blocks.length; i++) {
+                if (i % 2 === 0) {
+                    blocks[i] = blocks[i].replace(/\n{3,}/g, match => {
+                        return '\n\n' + '&nbsp;\n\n'.repeat(match.length - 2);
+                    });
+                }
+            }
+            return blocks.join('');
+        }
+
         async function loadArticle(id, pushState = true) {
             try {
                 const res = await fetch(`/posts?id=${id}`);
@@ -174,12 +184,14 @@
                 const contentEl = document.getElementById('detail-content');
                 
                 // 移除 marked 生成的 HTML 标签间的排版换行符，防止 pre-wrap 将其渲染为空行，导致列表等元素上下空隙过大
-                const parsedBody = marked.parse(post.content).replace(/>\n\s*</g, '><');
+                const processedContent = preserveEmptyLines(post.content);
+                const parsedBody = marked.parse(processedContent).replace(/>\n\s*</g, '><');
                 let html = `<h1>${post.title}</h1><div id="post-body">${parsedBody}</div>`;
                 
                 if (post.appendix) {
                     const align = post.appendix.align === 'right' ? 'right' : 'left';
-                    const parsedAppendix = marked.parse(post.appendix.content).replace(/>\n\s*</g, '><');
+                    const processedAppendix = preserveEmptyLines(post.appendix.content);
+                    const parsedAppendix = marked.parse(processedAppendix).replace(/>\n\s*</g, '><');
                     html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${parsedAppendix}</div>`;
                 }
 
