@@ -33,19 +33,52 @@
             white-space: pre-wrap; /* 关键：保留所有空格和换行 */
             word-wrap: break-word;
         }
+        
+        /* 列表修复 */
+        .markdown-body ul, .markdown-body ol {
+            white-space: normal; /* 解决 list 内容与上下空2行的问题 */
+            list-style-position: inside; /* 让左边的点与普通文本保持同样缩进 */
+            padding-left: 0;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .markdown-body li {
+            white-space: normal;
+            margin-bottom: 0.3em;
+        }
+
         /* 排除代码块中的样式干扰，确保代码块显示正常 */
         .markdown-body pre { 
-            background: #0d1117 !important; 
-            padding: 20px !important; 
-            border-radius: 28px !important; 
+            background: rgba(0, 0, 0, 0.2) !important; /* 调整比较突兀的黑色背景 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 30px !important; 
+            border-radius: 48px !important; /* 统一的超圆角效果 */
             margin: 25px 0 !important; 
             position: relative !important;
-            border: 1px solid rgba(255,255,255,0.15) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
             overflow-x: auto !important;
             white-space: pre !important; /* 代码块内不换行 */
         }
-        .markdown-body code { font-family: 'Consolas', 'Monaco', monospace !important; font-size: 0.9rem !important; background: transparent !important; white-space: pre-wrap !important; word-break: break-word !important; }
-        .markdown-body pre code { white-space: pre !important; word-break: normal !important; }
+        
+        /* 行内代码样式修复，使其与普通文字能区分开 */
+        .markdown-body code { 
+            font-family: 'Consolas', 'Monaco', monospace !important; 
+            font-size: 0.9rem !important; 
+            background: rgba(255, 255, 255, 0.15) !important; 
+            padding: 2px 6px !important;
+            border-radius: 8px !important;
+            color: #fff !important; 
+            white-space: pre-wrap !important; 
+            word-break: break-word !important; 
+        }
+        .markdown-body pre code { 
+            background: transparent !important; 
+            padding: 0 !important;
+            color: inherit !important;
+            white-space: pre !important; 
+            word-break: normal !important; 
+        }
 
         .markdown-body a { color: inherit !important; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.3); transition: border-color 0.3s; }
         .markdown-body a:hover { border-bottom-color: rgba(255, 255, 255, 0.8); }
