@@ -30,7 +30,7 @@
         .markdown-body { 
             line-height: 1.8; 
             color: rgba(255, 255, 255, 0.9); 
-            white-space: pre-wrap; /* 关键：保留所有空格和换行 */
+            /* 移除了 white-space: pre-wrap，因为 marked 已开启 breaks: true，这避免了 HTML 节点间的换行被渲染成大片空行 */
             word-wrap: break-word;
         }
         
@@ -70,11 +70,9 @@
             border-radius: 8px !important;
             color: #fff !important; 
             display: inline-block !important; /* 整体不断开，如果太长换到下一行 */
-            white-space: nowrap !important;
-            max-width: 100%;
-            overflow-x: auto;
+            white-space: pre-wrap !important; /* 如果真的比一行还长，允许它换行，不加 scroll 否则会触发 baseline 偏移 */
+            word-break: break-all !important; 
             vertical-align: baseline;
-            word-break: keep-all !important; 
         }
         .markdown-body pre code { 
             background: transparent !important; 
