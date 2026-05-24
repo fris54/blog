@@ -19,13 +19,14 @@
         .btn-del { background: #ff4444; color: white; border:none; padding: 5px 15px; border-radius: 48px; cursor:pointer; }
         
         /* 编辑器深色模式 */
-        .EasyMDEContainer { background: #222; color: white; border-radius: 48px; overflow: hidden; }
-        .editor-toolbar { background: #333 !important; border-color: #444 !important; border-top-left-radius: 48px !important; border-top-right-radius: 48px !important; padding: 10px !important; }
+        .EasyMDEContainer { background: transparent; color: white; border-radius: 0; }
+        .editor-toolbar { background: #333 !important; border-color: #444 !important; border-radius: 48px !important; padding: 10px 30px !important; margin-bottom: 10px; }
         .editor-toolbar button { color: white !important; }
         .editor-toolbar button:hover, .editor-toolbar button.active { background: #555 !important; }
-        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; border-bottom-left-radius: 48px !important; border-bottom-right-radius: 48px !important; padding: 10px !important; }
+        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; border-radius: 48px !important; padding: 20px 30px !important; }
         .CodeMirror-cursor { border-left: 2px solid white !important; } /* 修复没有闪烁的竖条光标 */
-        .editor-preview { background: #111 !important; color: #eee !important; border-bottom-left-radius: 48px !important; border-bottom-right-radius: 48px !important; padding: 20px !important; }
+        .editor-statusbar { padding: 10px 20px !important; color: #888 !important; text-align: right; } /* 字数行数放在内容框外 */
+        .editor-preview { background: #111 !important; color: #eee !important; border-radius: 48px !important; padding: 30px !important; }
     </style>
 </head>
 <body>
@@ -41,6 +42,16 @@
         <div style="margin-top:50px;">
             <h3>管理文章</h3>
             <div id="manage-list">加载中...</div>
+        </div>
+
+        <div style="margin-top:50px;">
+            <h3>全局底部附加内容</h3>
+            <textarea id="appendix-content" placeholder="输入Markdown格式的内容" rows="4" style="min-height: 120px; padding: 20px 30px;"></textarea>
+            <div style="margin-bottom: 20px; padding: 0 15px;">
+                <label style="margin-right: 20px; cursor: pointer;"><input type="radio" name="appendix-align" value="left" checked> 靠左显示</label>
+                <label style="cursor: pointer;"><input type="radio" name="appendix-align" value="right"> 靠右显示</label>
+            </div>
+            <button class="btn-pub" onclick="saveAppendix()">保存附加内容</button>
         </div>
     </div>
 
@@ -121,7 +132,19 @@
         async function loadPosts() {
             try {
                 const res = await fetch('/manage');
-                const posts = await res.json();
+                const data = await res.json();
+                const posts = data.posts || [];
+                
+                // 加载附加内容设置
+                if (data.appendix) {
+                    document.getElementById('appendix-content').value = data.appendix.content || '';
+                    if (data.appendix.align === 'right') {
+                        document.querySelector('input[name="appendix-align"][value="right"]').checked = true;
+                    } else {
+                        document.querySelector('input[name="appendix-align"][value="left"]').checked = true;
+                    }
+                }
+
                 document.getElementById('manage-list').innerHTML = posts.map(p => `
                     <div class="post-item">
                         <span>${p.title}</span>
@@ -132,6 +155,24 @@
                     </div>
                 `).join('');
             } catch (e) { document.getElementById('manage-list').innerText = '加载失败'; }
+        }
+
+        async function saveAppendix() {
+            const password = document.getElementById('admin-pw').value;
+            const content = document.getElementById('appendix-content').value;
+            const align = document.querySelector('input[name="appendix-align"]:checked').value;
+            
+            if (!password) return alert('请输入管理密码');
+            
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, action: 'update_settings', content, align })
+                });
+                if (res.ok) { alert('附加内容已保存'); } 
+                else { alert('保存失败：' + await res.text()); }
+            } catch (e) { alert('请求出错'); }
         }
 
         async function startEdit(id) {
