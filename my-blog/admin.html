@@ -50,6 +50,7 @@
             <textarea id="appendix-content" placeholder="输入Markdown格式的内容" rows="4" style="min-height: 120px; padding: 20px 30px;"></textarea>
             <div style="margin-bottom: 20px; padding: 0 15px;">
                 <label style="margin-right: 20px; cursor: pointer;"><input type="radio" name="appendix-align" value="left" checked> 靠左显示</label>
+                <label style="margin-right: 20px; cursor: pointer;"><input type="radio" name="appendix-align" value="center"> 居中显示</label>
                 <label style="cursor: pointer;"><input type="radio" name="appendix-align" value="right"> 靠右显示</label>
             </div>
             <button class="btn-pub" onclick="saveAppendix()">保存附加内容</button>
@@ -141,6 +142,8 @@
                     document.getElementById('appendix-content').value = data.appendix.content || '';
                     if (data.appendix.align === 'right') {
                         document.querySelector('input[name="appendix-align"][value="right"]').checked = true;
+                    } else if (data.appendix.align === 'center') {
+                        document.querySelector('input[name="appendix-align"][value="center"]').checked = true;
                     } else {
                         document.querySelector('input[name="appendix-align"][value="left"]').checked = true;
                     }
