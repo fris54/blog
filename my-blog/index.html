@@ -30,7 +30,7 @@
         .markdown-body { 
             line-height: 1.8; 
             color: rgba(255, 255, 255, 0.9); 
-            /* 移除了 white-space: pre-wrap，因为 marked 已开启 breaks: true，这避免了 HTML 节点间的换行被渲染成大片空行 */
+            white-space: pre-wrap; /* 核心：完全根据编辑器内的换行和缩进进行前台显示 */
             word-wrap: break-word;
         }
         
@@ -172,11 +172,15 @@
                 document.getElementById('detail-view').style.display = 'block';
                 
                 const contentEl = document.getElementById('detail-content');
-                let html = `<h1>${post.title}</h1><div id="post-body">${marked.parse(post.content)}</div>`;
+                
+                // 移除 marked 生成的 HTML 标签间的排版换行符，防止 pre-wrap 将其渲染为空行，导致列表等元素上下空隙过大
+                const parsedBody = marked.parse(post.content).replace(/>\n\s*</g, '><');
+                let html = `<h1>${post.title}</h1><div id="post-body">${parsedBody}</div>`;
                 
                 if (post.appendix) {
                     const align = post.appendix.align === 'right' ? 'right' : 'left';
-                    html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${marked.parse(post.appendix.content)}</div>`;
+                    const parsedAppendix = marked.parse(post.appendix.content).replace(/>\n\s*</g, '><');
+                    html += `<div style="margin-top: 50px; text-align: ${align}; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; opacity: 0.6; font-size: 0.9em;" class="markdown-body">${parsedAppendix}</div>`;
                 }
 
                 contentEl.innerHTML = html;
