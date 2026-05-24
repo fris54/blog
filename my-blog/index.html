@@ -66,14 +66,14 @@
             white-space: pre !important; /* 代码块内不换行 */
         }
         
-        /* 行内代码样式修复，保留特殊字体，去掉框 */
+        /* 行内代码样式修复，保留特殊字体，去掉框，提亮颜色 */
         .markdown-body code { 
             font-family: 'Consolas', 'Monaco', monospace !important; 
             font-size: 0.95rem !important; 
             background: transparent !important; 
             padding: 0 !important;
             border: none !important;
-            color: inherit !important; 
+            color: #ffcc00 !important; /* 提高亮度，改为亮黄色方便分辨 */
             display: inline-block !important; /* 整体不断开，如果太长换到下一行 */
             white-space: pre-wrap !important; 
             word-break: break-all !important; 
