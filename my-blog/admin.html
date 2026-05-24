@@ -9,22 +9,23 @@
     <style>
         body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
         .admin-container { width: 100%; max-width: 900px; background: #1a1a1a; padding: 30px; border-radius: 48px; border: 1px solid #333; }
-        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 24px; margin-bottom: 15px; outline: none; }
+        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 48px; margin-bottom: 15px; outline: none; }
         
-        .btn-pub { width: 100%; padding: 15px; border-radius: 24px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; margin-bottom: 20px; }
-        .btn-cancel { background: #444; color: white; padding: 10px; border: none; border-radius: 24px; cursor: pointer; display: none; margin-bottom: 20px; width: 100%; }
+        .btn-pub { width: 100%; padding: 15px; border-radius: 48px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; margin-bottom: 20px; }
+        .btn-cancel { background: #444; color: white; padding: 10px; border: none; border-radius: 48px; cursor: pointer; display: none; margin-bottom: 20px; width: 100%; }
         
-        .post-item { background: #222; padding: 15px; border-radius: 24px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .btn-edit { background: #4a4a4a; color: white; border:none; padding: 5px 10px; border-radius: 12px; cursor:pointer; margin-right: 5px; }
-        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 10px; border-radius: 12px; cursor:pointer; }
+        .post-item { background: #222; padding: 15px; border-radius: 48px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .btn-edit { background: #4a4a4a; color: white; border:none; padding: 5px 15px; border-radius: 48px; cursor:pointer; margin-right: 5px; }
+        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 15px; border-radius: 48px; cursor:pointer; }
         
         /* 编辑器深色模式 */
-        .EasyMDEContainer { background: #222; color: white; }
-        .editor-toolbar { background: #333 !important; border-color: #444 !important; }
+        .EasyMDEContainer { background: #222; color: white; border-radius: 48px; overflow: hidden; }
+        .editor-toolbar { background: #333 !important; border-color: #444 !important; border-top-left-radius: 48px !important; border-top-right-radius: 48px !important; padding: 10px !important; }
         .editor-toolbar button { color: white !important; }
         .editor-toolbar button:hover, .editor-toolbar button.active { background: #555 !important; }
-        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; }
-        .editor-preview { background: #111 !important; color: #eee !important; }
+        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; border-bottom-left-radius: 48px !important; border-bottom-right-radius: 48px !important; padding: 10px !important; }
+        .CodeMirror-cursor { border-left: 2px solid white !important; } /* 修复没有闪烁的竖条光标 */
+        .editor-preview { background: #111 !important; color: #eee !important; border-bottom-left-radius: 48px !important; border-bottom-right-radius: 48px !important; padding: 20px !important; }
     </style>
 </head>
 <body>
@@ -50,7 +51,40 @@
             element: document.getElementById("md-editor"), 
             spellChecker: false,
             renderingConfig: { codeSyntaxHighlighting: true },
-            toolbar: ["bold", "italic", "heading", "|", "quote", "code", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"]
+            toolbar: [
+                "bold", "italic", "heading", "|", "quote", 
+                {
+                    name: "inline-code",
+                    action: function(editor) {
+                        const cm = editor.codemirror;
+                        const selection = cm.getSelection();
+                        cm.replaceSelection("`" + selection + "`");
+                        if (!selection) {
+                            const pos = cm.getCursor();
+                            cm.setCursor({line: pos.line, ch: pos.ch - 1});
+                        }
+                        cm.focus();
+                    },
+                    className: "fa fa-code",
+                    title: "Inline Code (``)",
+                },
+                {
+                    name: "block-code",
+                    action: function(editor) {
+                        const cm = editor.codemirror;
+                        const selection = cm.getSelection();
+                        cm.replaceSelection("```\n" + selection + "\n```");
+                        if (!selection) {
+                            const pos = cm.getCursor();
+                            cm.setCursor({line: pos.line - 1, ch: 0});
+                        }
+                        cm.focus();
+                    },
+                    className: "fa fa-terminal",
+                    title: "Code Block (```)",
+                },
+                "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"
+            ]
         });
 
         async function submitPost() {
