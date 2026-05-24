@@ -4,8 +4,9 @@ export async function onRequest(context) {
   const adminPassword = env.ADMIN_PASSWORD;
 
   if (request.method === "GET") {
-    const { results } = await db.prepare("SELECT id, title FROM posts ORDER BY id DESC").all();
-    return new Response(JSON.stringify(results), {
+    const { results } = await db.prepare("SELECT id, title FROM posts WHERE title != '__GLOBAL_APPENDIX__' ORDER BY id DESC").all();
+    const appendix = await db.prepare("SELECT content, date as align FROM posts WHERE title = '__GLOBAL_APPENDIX__'").first();
+    return new Response(JSON.stringify({ posts: results, appendix }), {
       headers: { "Content-Type": "application/json" }
     });
   }
@@ -16,6 +17,21 @@ export async function onRequest(context) {
 
       if (!adminPassword || body.password !== adminPassword) {
         return new Response("Unauthorized", { status: 401 });
+      }
+
+      // 更新设置逻辑
+      if (body.action === "update_settings") {
+        const existing = await db.prepare("SELECT id FROM posts WHERE title = '__GLOBAL_APPENDIX__'").first();
+        if (existing) {
+            await db.prepare("UPDATE posts SET content = ?, date = ? WHERE title = '__GLOBAL_APPENDIX__'")
+              .bind(body.content, body.align) // Date field stores alignment ('left' or 'right')
+              .run();
+        } else {
+            await db.prepare("INSERT INTO posts (title, content, date) VALUES ('__GLOBAL_APPENDIX__', ?, ?)")
+              .bind(body.content, body.align)
+              .run();
+        }
+        return new Response("Settings Updated", { status: 200 });
       }
 
       // 删除逻辑
