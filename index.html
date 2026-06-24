@@ -106,8 +106,8 @@
         .markdown-body pre:hover .copy-btn { opacity: 1; }
         .copy-btn:hover { background: #fff; color: #000; }
         .back-btn { cursor:pointer; margin-bottom:20px; opacity:0.6; display:inline-flex; align-items: center; color: white; text-decoration: none; transition: 0.3s; }
-        #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre-wrap; word-break: break-word; text-align: center; }
-        #typewriter .source { display: block; font-size: 0.8em; font-family: 'Playfair Display', serif; font-style: italic; margin-top: 8px; opacity: 0.8; letter-spacing: 1px; }
+        #typewriter { margin-top:15px; opacity:0.5; font-weight:300; min-height: 1.2em; white-space: pre-wrap; word-break: break-word; text-align: center; position: relative; }
+        #typewriter .source { position: absolute; top: 100%; left: 0; right: 0; display: block; font-size: 0.8em; font-family: 'Playfair Display', serif; font-style: italic; margin-top: 10px; opacity: 0.8; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -180,11 +180,11 @@
                         el.innerHTML += contentText.charAt(i); 
                     }
                     i++; 
-                    setTimeout(type, 100); 
+                    setTimeout(type, 40); 
                 } else if (sourceText) {
                     setTimeout(() => {
                         el.innerHTML += `<span class="source">— ${sourceText}</span>`;
-                    }, 400);
+                    }, 200);
                 }
             }
             type();
