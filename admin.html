@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Markdown Editor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #111; color: #eee; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
+        .admin-container { width: 100%; max-width: 900px; background: #1a1a1a; padding: 30px; border-radius: 48px; border: 1px solid #333; margin-top: 20px; align-self: flex-start; }
+        input, textarea { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 48px; margin-bottom: 15px; outline: none; }
+        
+        .btn-pub { width: 100%; padding: 15px; border-radius: 48px; border: none; cursor: pointer; font-weight: bold; background: #fff; color: #000; margin-bottom: 20px; transition: 0.3s; }
+        .btn-pub:hover { background: #ddd; }
+        .btn-cancel { background: #444; color: white; padding: 10px; border: none; border-radius: 48px; cursor: pointer; display: none; margin-bottom: 20px; width: 100%; transition: 0.3s; }
+        
+        .post-item { background: #222; padding: 15px 25px; border-radius: 48px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .btn-edit { background: #4a4a4a; color: white; border:none; padding: 5px 15px; border-radius: 48px; cursor:pointer; margin-right: 5px; transition: 0.3s; }
+        .btn-edit:hover { background: #666; }
+        .btn-del { background: #ff4444; color: white; border:none; padding: 5px 15px; border-radius: 48px; cursor:pointer; transition: 0.3s; }
+        .btn-del:hover { background: #cc0000; }
+        
+        /* 编辑器深色模式 */
+        .EasyMDEContainer { background: transparent; color: white; border-radius: 0; }
+        .editor-toolbar { background: #333 !important; border-color: #444 !important; border-radius: 48px !important; padding: 10px 30px !important; margin-bottom: 10px; }
+        .editor-toolbar button { color: white !important; }
+        .editor-toolbar button:hover, .editor-toolbar button.active { background: #555 !important; }
+        .CodeMirror { background: #222 !important; color: white !important; border-color: #444 !important; border-radius: 48px !important; padding: 20px 30px !important; }
+        .CodeMirror-cursor { border-left: 2px solid white !important; }
+        .editor-statusbar { padding: 10px 20px !important; color: #888 !important; text-align: right; }
+        .editor-preview { background: #111 !important; color: #eee !important; border-radius: 48px !important; padding: 30px !important; }
+
+        /* Login Screen */
+        #login-view { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #111; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: #1a1a1a; padding: 40px; border-radius: 48px; border: 1px solid #333; text-align: center; width: 90%; max-width: 400px; }
+        
+        /* App View */
+        #app-view { display: none; width: 100%; display: flex; justify-content: center; }
+
+        /* Tabs */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        .nav-tab { background: transparent; color: #888; border: none; font-size: 15px; cursor: pointer; padding: 10px 20px; border-radius: 24px; transition: 0.3s; white-space: nowrap; }
+        .nav-tab:hover { background: #222; }
+        .nav-tab.active { background: #fff; color: #000; font-weight: bold; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        /* Subtitles UI */
+        .subtitle-item { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #222; padding: 20px; border-radius: 32px; border: 1px solid #333; position: relative; }
+        .subtitle-item input { margin-bottom: 0; }
+        .subtitle-inputs { display: flex; gap: 10px; width: 100%; flex-wrap: wrap; }
+        .subtitle-inputs input:first-child { flex: 2; min-width: 200px; }
+        .subtitle-inputs input:last-child { flex: 1; min-width: 150px; }
+        .btn-remove-sub { position: absolute; top: -10px; right: -10px; background: #ff4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-remove-sub:hover { transform: scale(1.1); }
+        .btn-add-sub { background: #333; color: white; border: 1px dashed #555; padding: 15px; border-radius: 32px; width: 100%; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
+        .btn-add-sub:hover { background: #444; border-color: #777; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- Login View -->
+    <div id="login-view">
+        <div class="login-box">
+            <h2 style="margin-bottom: 25px;">管理员登录</h2>
+            <input type="password" id="login-pw" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter') doLogin()">
+            <button class="btn-pub" onclick="doLogin()" style="margin-bottom: 0;">登 录</button>
+            <div id="login-msg" style="color: #ff4444; margin-top: 15px; font-size: 14px; display: none;">密码错误</div>
+        </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="app-view">
+        <div class="admin-container">
+            <!-- Navigation -->
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('tab-publish', this)">发布文章</button>
+                <button class="nav-tab" onclick="switchTab('tab-manage', this)">管理文章</button>
+                <button class="nav-tab" onclick="switchTab('tab-appendix', this)">底部附加内容</button>
+                <button class="nav-tab" onclick="switchTab('tab-subtitle', this)">主题小字控制</button>
+            </div>
+
+            <!-- Publish Tab -->
+            <div id="tab-publish" class="tab-content active">
+                <h2 id="page-title" style="margin-bottom: 20px;">发布新文章</h2>
+                <input type="text" id="post-title" placeholder="文章标题">
+                <input type="date" id="post-date" placeholder="发布日期 (留空则自动填写今日)" style="margin-bottom: 15px;">
+                <textarea id="md-editor"></textarea>
+                <button class="btn-pub" id="submit-btn" onclick="submitPost()">提交发布</button>
+                <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">取消修改</button>
+            </div>
+
+            <!-- Manage Tab -->
+            <div id="tab-manage" class="tab-content">
+                <h2 style="margin-bottom: 20px;">管理文章</h2>
+                <div id="manage-list">加载中...</div>
+            </div>
+
+            <!-- Appendix Tab -->
+            <div id="tab-appendix" class="tab-content">
+                <h2 style="margin-bottom: 20px;">全局底部附加内容</h2>
+                <textarea id="appendix-content" placeholder="输入Markdown格式的内容" rows="4" style="min-height: 120px; padding: 20px 30px;"></textarea>
+                <div style="margin-bottom: 20px; padding: 0 15px;">
+                    <label style="margin-right: 20px; cursor: pointer;"><input type="radio" name="appendix-align" value="left" checked> 靠左显示</label>
+                    <label style="margin-right: 20px; cursor: pointer;"><input type="radio" name="appendix-align" value="center"> 居中显示</label>
+                    <label style="cursor: pointer;"><input type="radio" name="appendix-align" value="right"> 靠右显示</label>
+                </div>
+                <button class="btn-pub" onclick="saveAppendix()">保存附加内容</button>
+            </div>
+
+            <!-- Subtitle Tab -->
+            <div id="tab-subtitle" class="tab-content">
+                <h2 style="margin-bottom: 20px;">主题小字控制</h2>
+                <p style="color: #888; font-size: 14px; margin-bottom: 20px;">添加在前台首页随机显示的小字内容及来源。</p>
+                <div id="subtitle-list">
+                    <!-- Subtitles will be injected here -->
+                </div>
+                <button class="btn-add-sub" onclick="addSubtitleItem()">+ 添加新内容</button>
+                <button class="btn-pub" onclick="saveSubtitles()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editId = null;
+        let adminToken = '';
+        let easyMDE = null;
+
+        // --- Auth Logic ---
+        async function doLogin() {
+            const pw = document.getElementById('login-pw').value;
+            if (!pw) return;
+            const msg = document.getElementById('login-msg');
+            msg.style.display = 'none';
+
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'verify', password: pw })
+                });
+                
+                if (res.ok) {
+                    adminToken = pw;
+                    document.getElementById('login-view').style.display = 'none';
+                    document.getElementById('app-view').style.display = 'flex';
+                    initApp();
+                } else {
+                    msg.innerText = '密码错误或无权限';
+                    msg.style.display = 'block';
+                }
+            } catch (e) {
+                msg.innerText = '网络错误';
+                msg.style.display = 'block';
+            }
+        }
+
+        // --- App Init & Tabs ---
+        function initApp() {
+            if (!easyMDE) {
+                easyMDE = new EasyMDE({ 
+                    element: document.getElementById("md-editor"), 
+                    spellChecker: false,
+                    renderingConfig: { codeSyntaxHighlighting: true },
+                    toolbar: [
+                        "bold", "italic", "heading", "|", "quote", 
+                        {
+                            name: "inline-code",
+                            action: function(editor) {
+                                const cm = editor.codemirror;
+                                const selection = cm.getSelection();
+                                cm.replaceSelection("\`" + selection + "\`");
+                                if (!selection) {
+                                    const pos = cm.getCursor();
+                                    cm.setCursor({line: pos.line, ch: pos.ch - 1});
+                                }
+                                cm.focus();
+                            },
+                            className: "fa fa-code",
+                            title: "Inline Code (``)",
+                        },
+                        {
+                            name: "block-code",
+                            action: function(editor) {
+                                const cm = editor.codemirror;
+                                const selection = cm.getSelection();
+                                cm.replaceSelection("\`\`\`\n" + selection + "\n\`\`\`");
+                                if (!selection) {
+                                    const pos = cm.getCursor();
+                                    cm.setCursor({line: pos.line - 1, ch: 0});
+                                }
+                                cm.focus();
+                            },
+                            className: "fa fa-terminal",
+                            title: "Code Block (```)",
+                        },
+                        "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"
+                    ]
+                });
+            }
+            loadData();
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+            
+            // If returning to publish tab from edit mode, refresh editor layout
+            if (tabId === 'tab-publish' && easyMDE) {
+                setTimeout(() => easyMDE.codemirror.refresh(), 10);
+            }
+        }
+
+        // --- Data Loading ---
+        async function loadData() {
+            try {
+                // Fetch manage info
+                const res = await fetch('/manage');
+                const data = await res.json();
+                
+                // 1. Load Posts
+                const posts = data.posts || [];
+                document.getElementById('manage-list').innerHTML = posts.map(p => `
+                    <div class="post-item">
+                        <span style="font-weight: 500;">${p.title}</span>
+                        <div>
+                            <button class="btn-edit" onclick="startEdit(${p.id})">修改</button>
+                            <button class="btn-del" onclick="deletePost(${p.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // 2. Load Appendix Settings
+                if (data.appendix) {
+                    document.getElementById('appendix-content').value = data.appendix.content || '';
+                    if (data.appendix.align === 'right') {
+                        document.querySelector('input[name="appendix-align"][value="right"]').checked = true;
+                    } else if (data.appendix.align === 'center') {
+                        document.querySelector('input[name="appendix-align"][value="center"]').checked = true;
+                    } else {
+                        document.querySelector('input[name="appendix-align"][value="left"]').checked = true;
+                    }
+                }
+
+                // 3. Load Subtitles
+                const subtitles = data.subtitles || [];
+                const subListEl = document.getElementById('subtitle-list');
+                subListEl.innerHTML = '';
+                subtitles.forEach(sub => renderSubtitleItem(sub.content, sub.source));
+
+            } catch (e) { 
+                document.getElementById('manage-list').innerText = '加载失败'; 
+            }
+        }
+
+        // --- Subtitles Logic ---
+        function renderSubtitleItem(content = '', source = '') {
+            const container = document.getElementById('subtitle-list');
+            const div = document.createElement('div');
+            div.className = 'subtitle-item';
+            div.innerHTML = `
+                <button class="btn-remove-sub" onclick="this.parentElement.remove()" title="移除此项">×</button>
+                <div class="subtitle-inputs">
+                    <input type="text" class="sub-content" placeholder="输入随机展示的内容..." value="${content.replace(/"/g, '&quot;')}">
+                    <input type="text" class="sub-source" placeholder="输入来源 (如: 某某书籍)" value="${source.replace(/"/g, '&quot;')}">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addSubtitleItem() {
+            renderSubtitleItem();
+        }
+
+        async function saveSubtitles() {
+            const items = document.querySelectorAll('.subtitle-item');
+            const subtitles = [];
+            items.forEach(item => {
+                const content = item.querySelector('.sub-content').value.trim();
+                const source = item.querySelector('.sub-source').value.trim();
+                if (content || source) {
+                    subtitles.push({ content, source });
+                }
+            });
+
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: adminToken, action: 'update_subtitles', subtitles })
+                });
+                if (res.ok) alert('主题小字已保存！');
+                else alert('保存失败：' + await res.text());
+            } catch (e) { alert('请求出错'); }
+        }
+
+        // --- Post Management Logic ---
+        async function submitPost() {
+            const title = document.getElementById('post-title').value;
+            const date = document.getElementById('post-date').value;
+            const content = easyMDE.value();
+            if (!title || !content) return alert('请填写标题和内容');
+
+            const payload = {
+                password: adminToken,
+                title, content, date,
+                action: editId ? 'update' : 'create',
+                id: editId
+            };
+
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert('发布成功！');
+                    cancelEdit(); // Reset form
+                    loadData(); // Reload list
+                } else {
+                    alert('失败：' + await res.text());
+                }
+            } catch (e) { alert('网络错误'); }
+        }
+
+        async function startEdit(id) {
+            try {
+                const res = await fetch(\`/posts?id=\${id}\`);
+                const post = await res.json();
+                editId = id;
+                document.getElementById('post-title').value = post.title;
+                document.getElementById('post-date').value = post.date || '';
+                easyMDE.value(post.content);
+                document.getElementById('page-title').innerText = "修改文章";
+                document.getElementById('submit-btn').innerText = "确认修改";
+                document.getElementById('cancel-btn').style.display = "block";
+                
+                // Switch to Publish tab
+                switchTab('tab-publish', document.querySelector('.nav-tab'));
+                window.scrollTo(0,0);
+            } catch (e) { alert('加载文章数据失败'); }
+        }
+
+        function cancelEdit() {
+            editId = null;
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-date').value = '';
+            if (easyMDE) easyMDE.value('');
+            document.getElementById('page-title').innerText = "发布新文章";
+            document.getElementById('submit-btn').innerText = "提交发布";
+            document.getElementById('cancel-btn').style.display = "none";
+        }
+
+        async function deletePost(id) {
+            if (!confirm('确定删除这篇文章？')) return;
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: adminToken, action: 'delete', id })
+                });
+                if (res.ok) { loadData(); } 
+                else { alert('失败：' + await res.text()); }
+            } catch (e) { alert('请求出错'); }
+        }
+
+        // --- Appendix Logic ---
+        async function saveAppendix() {
+            const content = document.getElementById('appendix-content').value;
+            const align = document.querySelector('input[name="appendix-align"]:checked').value;
+            
+            try {
+                const res = await fetch('/manage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: adminToken, action: 'update_settings', content, align })
+                });
+                if (res.ok) { alert('附加内容已保存'); } 
+                else { alert('保存失败：' + await res.text()); }
+            } catch (e) { alert('请求出错'); }
+        }
+    </script>
+</body>
+</html>
