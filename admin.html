@@ -268,8 +268,8 @@
             div.innerHTML = `
                 <button class="btn-remove-sub" onclick="this.parentElement.remove()" title="移除此项">×</button>
                 <div class="subtitle-inputs">
-                    <input type="text" class="sub-content" placeholder="输入随机展示的内容..." value="${content.replace(/"/g, '&quot;')}">
-                    <input type="text" class="sub-source" placeholder="输入来源 (如: 某某书籍)" value="${source.replace(/"/g, '&quot;')}">
+                    <input type="text" class="sub-content" placeholder="内容..." value="${content.replace(/"/g, '&quot;')}">
+                    <input type="text" class="sub-source" placeholder="来源" value="${source.replace(/"/g, '&quot;')}">
                 </div>
             `;
             container.appendChild(div);
