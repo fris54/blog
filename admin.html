@@ -174,7 +174,7 @@
                             action: function(editor) {
                                 const cm = editor.codemirror;
                                 const selection = cm.getSelection();
-                                cm.replaceSelection("\`" + selection + "\`");
+                                cm.replaceSelection("`" + selection + "`");
                                 if (!selection) {
                                     const pos = cm.getCursor();
                                     cm.setCursor({line: pos.line, ch: pos.ch - 1});
@@ -189,7 +189,7 @@
                             action: function(editor) {
                                 const cm = editor.codemirror;
                                 const selection = cm.getSelection();
-                                cm.replaceSelection("\`\`\`\n" + selection + "\n\`\`\`");
+                                cm.replaceSelection("```\n" + selection + "\n```");
                                 if (!selection) {
                                     const pos = cm.getCursor();
                                     cm.setCursor({line: pos.line - 1, ch: 0});
@@ -333,7 +333,7 @@
 
         async function startEdit(id) {
             try {
-                const res = await fetch(\`/posts?id=\${id}\`);
+                const res = await fetch(`/posts?id=${id}`);
                 const post = await res.json();
                 editId = id;
                 document.getElementById('post-title').value = post.title;
